@@ -36,7 +36,7 @@ Clone the repository and run the `install.sh` script to install the `bkp` comman
 ./install.sh
 ```
 
-This will install the script to `/usr/local/bin/bkp`.
+This installs the script to `/usr/local/bin/bkp` and uses `sudo` automatically when elevated privileges are required.
 
 ## Examples
 

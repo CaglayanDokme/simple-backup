@@ -1,14 +1,14 @@
 #!/bin/bash
-# test/move-with-symlink-resolution.sh
-set -e
-TEST_DIR=$(mktemp -d)
-trap 'rm -rf "$TEST_DIR"' EXIT
-cd "$TEST_DIR"
-BKP_SCRIPT="$(pwd)/../../src/backup.sh"
+
+set -euo pipefail
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/testlib.bash"
+
+setup_test_env
 
 mkdir move_sym_dir
 touch target.txt
 ln -s ../target.txt move_sym_dir/link
-bash "$BKP_SCRIPT" -rms move_sym_dir
-[[ ! -e "move_sym_dir" ]] && [[ -f "move_sym_dir.bkp/link" ]] && [[ ! -L "move_sym_dir.bkp/link" ]]
-echo "Test Passed: Move with symlink resolution"
+bash "${BKP_SCRIPT}" -rms move_sym_dir
+[[ ! -e move_sym_dir && -f move_sym_dir.bkp/link && ! -L move_sym_dir.bkp/link ]]
+pass_test "Move with symlink resolution"

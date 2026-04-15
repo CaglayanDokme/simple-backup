@@ -1,13 +1,14 @@
 #!/bin/bash
-# test/timestamp.sh
-set -e
-TEST_DIR=$(mktemp -d)
-trap 'rm -rf "$TEST_DIR"' EXIT
-cd "$TEST_DIR"
-BKP_SCRIPT="$(pwd)/../../src/backup.sh"
+
+set -euo pipefail
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/testlib.bash"
+
+setup_test_env
 
 touch time_file
-bash "$BKP_SCRIPT" -t time_file
-# Check if any file matching the timestamp pattern exists
-ls time_file.*.bkp > /dev/null
-echo "Test Passed: Timestamp"
+bash "${BKP_SCRIPT}" -t time_file
+shopt -s nullglob
+matches=(time_file.*.bkp)
+[[ ${#matches[@]} -gt 0 ]]
+pass_test "Timestamp"
