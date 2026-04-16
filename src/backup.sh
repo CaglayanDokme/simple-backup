@@ -172,8 +172,8 @@ run_backup_operation() {
         cp_cmd+=("--force")
         mv_cmd+=("--force")
     else
-        cp_cmd+=("--update=none")
-        mv_cmd+=("--update=none")
+        cp_cmd+=("--update")
+        mv_cmd+=("--update")
     fi
 
     if [[ "${RECURSIVE}" == "true" ]]; then
