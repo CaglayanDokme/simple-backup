@@ -12,6 +12,16 @@ readonly TARGET_NAME="bkp"
 readonly TARGET_PATH="${INSTALL_DIR}/${TARGET_NAME}"
 readonly GITHUB_RAW="https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master"
 
+TEMP_FILE=""
+
+cleanup() {
+    if [[ -n "${TEMP_FILE}" && -f "${TEMP_FILE}" ]]; then
+        rm -f "${TEMP_FILE}"
+    fi
+}
+
+trap cleanup EXIT
+
 error() {
     echo "[✗] Error: $*" >&2
 }
@@ -24,40 +34,71 @@ success() {
     echo "[✓] $*"
 }
 
-# Try to get the script content from local file or GitHub
-get_script_content() {
+# Resolve a local source file only when install.sh is executed from a real repo checkout.
+resolve_local_source() {
+    local script_source="${BASH_SOURCE[0]:-}"
     local script_dir
     local source_file
 
-    # Try to find local source file first
-    if [[ -n "${BASH_SOURCE[0]}" ]]; then
-        script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}" 2>/dev/null || echo ".")" 2>/dev/null && pwd || echo ".")"
-        source_file="${script_dir}/src/backup.sh"
-
-        if [[ -f "${source_file}" ]]; then
-            info "Using local source from: ${source_file}"
-            cat "${source_file}"
-            return 0
-        fi
+    if [[ -z "${script_source}" || "${script_source}" == "-" || ! -f "${script_source}" ]]; then
+        return 1
     fi
 
-    # Fall back to downloading from GitHub
-    info "Downloading from GitHub..."
+    script_dir="$(cd "$(dirname "${script_source}")" && pwd)"
+    source_file="${script_dir}/src/backup.sh"
 
-    # Try curl first
-    if command -v curl >/dev/null 2>&1; then
-        curl -fsSL "${GITHUB_RAW}/src/backup.sh" || return 1
+    if [[ -f "${source_file}" ]]; then
+        printf '%s\n' "${source_file}"
         return 0
     fi
 
-    # Fall back to wget
+    return 1
+}
+
+download_script() {
+    local destination_file="$1"
+
+    info "Downloading from GitHub..."
+
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "${GITHUB_RAW}/src/backup.sh" -o "${destination_file}" || return 1
+        return 0
+    fi
+
     if command -v wget >/dev/null 2>&1; then
-        wget -qO- "${GITHUB_RAW}/src/backup.sh" || return 1
+        wget -qO "${destination_file}" "${GITHUB_RAW}/src/backup.sh" || return 1
         return 0
     fi
 
     error "Neither curl nor wget found. Please install one and try again."
     return 1
+}
+
+stage_script() {
+    local destination_file="$1"
+    local source_file
+
+    if source_file="$(resolve_local_source)"; then
+        info "Using local source from: ${source_file}"
+        cp "${source_file}" "${destination_file}"
+        return 0
+    fi
+
+    download_script "${destination_file}"
+}
+
+validate_script() {
+    local script_file="$1"
+
+    if [[ ! -s "${script_file}" ]]; then
+        error "Downloaded installer payload is empty."
+        return 1
+    fi
+
+    if ! head -n 1 "${script_file}" | grep -qx '#!/bin/bash'; then
+        error "Installer payload does not look like the bkp script."
+        return 1
+    fi
 }
 
 run_privileged() {
@@ -74,18 +115,13 @@ run_privileged() {
 install_script() {
     info "Installing ${TARGET_NAME} to ${TARGET_PATH}..."
 
-    local script_content
-    local temp_file
+    TEMP_FILE="$(mktemp)" || exit 1
 
-    script_content=$(get_script_content) || exit 1
-    temp_file=$(mktemp) || exit 1
+    stage_script "${TEMP_FILE}" || exit 1
+    validate_script "${TEMP_FILE}" || exit 1
 
-    # Write content to temp file
-    echo "${script_content}" > "${temp_file}" || exit 1
-
-    # Move to target location with privilege elevation
-    run_privileged mv "${temp_file}" "${TARGET_PATH}" || exit 1
-    run_privileged chmod +x "${TARGET_PATH}" || exit 1
+    run_privileged mkdir -p "${INSTALL_DIR}" || exit 1
+    run_privileged install -m 0755 "${TEMP_FILE}" "${TARGET_PATH}" || exit 1
 
     success "Installation complete!"
     info "You can now use the '${TARGET_NAME}' command."
