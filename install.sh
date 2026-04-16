@@ -17,11 +17,11 @@ error() {
 }
 
 info() {
-    echo "[INF] $*" >&2
+    echo "[INF] $*"
 }
 
 success() {
-    echo "[OK] $*" >&2
+    echo "[OK] $*"
 }
 
 # Try to get the script content from local file or GitHub
