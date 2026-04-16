@@ -13,15 +13,15 @@ readonly TARGET_PATH="${INSTALL_DIR}/${TARGET_NAME}"
 readonly GITHUB_RAW="https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master"
 
 error() {
-    echo "[ERR] Error: $*" >&2
+    echo "[✗] Error: $*" >&2
 }
 
 info() {
-    echo "[INF] $*"
+    echo "[→] $*"
 }
 
 success() {
-    echo "[OK] $*"
+    echo "[✓] $*"
 }
 
 # Try to get the script content from local file or GitHub
