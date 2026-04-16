@@ -31,6 +31,23 @@ bkp --help
 - **Custom Destinations:** Specify a target directory for backups with `-d`.
 - **Safety First:** Prevents accidental overwrites unless `-f` is used.
 
+### Why does it exist / Is it beneficial?
+
+`bkp` fills a narrow but genuine gap: a one-command, opinionated "snapshot in place" for files and directories. The alternatives are:
+
+- **Manual `cp file file.bkp`** — no safety checks, no symlink awareness, no timestamps, verbose for multiple targets.
+- **Full backup systems** (rsync, borgbackup, restic, duplicity, timeshift) — designed for scheduled/incremental/remote backups; overkill for "save this before I edit it."
+- **VCS snapshots** (`git stash`, `git commit`) — only works for tracked files, not arbitrary paths like `/etc/nginx/nginx.conf`.
+
+**Verdict: Yes, it's useful.** The niche is small but real — especially for sysadmins editing config files in etc or developers quickly snapshotting something outside version control.
+
+### What's superior vs. existing solutions?
+
+- **Symlink-safe by default** — refuses to silently break/dereference symlinks without `-s`
+- **Safety-first** — won't overwrite existing backups without `-f`; requires explicit `-r` for directories
+- **Composable flags** — combined short flags (`-mrt`), timestamp naming, custom destination
+- **Zero dependencies** — pure bash + coreutils, runs anywhere
+
 ## Usage
 
 ```bash
