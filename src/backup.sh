@@ -23,7 +23,7 @@ show_help() {
 Usage: ${SCRIPT_NAME} [OPTIONS] <path1> [path2] ...
 
 Options:
-  -f, --force            Overwrite existing backup files.
+  -f, --force            Overwrite existing backup files or directories.
   -s, --symbolic         Follow symbolic links. By default, errors if a symlink is encountered.
   -r, --recursive        Allow backing up directories.
   -t, --timestamp        Add a timestamp to the backup name: <name>.<timestamp>.bkp
@@ -162,19 +162,26 @@ build_backup_path() {
     fi
 }
 
+prepare_destination() {
+    local final_dest="$1"
+
+    if [[ ! -e "${final_dest}" && ! -L "${final_dest}" ]]; then
+        return 0
+    fi
+
+    if [[ "${FORCE}" != "true" ]]; then
+        error "Backup already exists: ${final_dest}. Use -f or --force to overwrite."
+        return 1
+    fi
+
+    rm -rf -- "${final_dest}"
+}
+
 run_backup_operation() {
     local target="$1"
     local final_dest="$2"
     local -a cp_cmd=("cp")
     local -a mv_cmd=("mv")
-
-    if [[ "${FORCE}" == "true" ]]; then
-        cp_cmd+=("--force")
-        mv_cmd+=("--force")
-    else
-        cp_cmd+=("--update")
-        mv_cmd+=("--update")
-    fi
 
     if [[ "${RECURSIVE}" == "true" ]]; then
         if [[ "${FOLLOW_SYMLINKS}" == "true" ]]; then
@@ -183,6 +190,8 @@ run_backup_operation() {
             cp_cmd+=("-r")
         fi
     fi
+
+    prepare_destination "${final_dest}"
 
     if [[ "${MOVE}" == "true" ]]; then
         if [[ "${FOLLOW_SYMLINKS}" == "true" ]]; then

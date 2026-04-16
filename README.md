@@ -56,7 +56,7 @@ bkp [OPTIONS] <path1> [path2] ...
 
 ### Options
 
-- `-f, --force`: Overwrite existing backup files.
+- `-f, --force`: Overwrite existing backup files or directories.
 - `-s, --symbolic`: Follow symbolic links. By default, errors if a symlink is encountered.
 - `-r, --recursive`: Allow backing up directories.
 - `-t, --timestamp`: Add a timestamp to the backup name: `<name>.<timestamp>.bkp`.
@@ -137,7 +137,3 @@ bkp --help         # Should display help message
    ```bash
    bkp -s my_link # Backs up the actual file my_link points to.
    ```
-
-## License
-
-MIT
