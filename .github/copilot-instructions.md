@@ -1,0 +1,40 @@
+# copilot-instructions.md
+
+## Project Snapshot
+
+- `bkp` is a small Bash CLI for creating local backups with `.bkp` suffixes.
+- Core behavior lives in `src/backup.sh`.
+- `install.sh` only stages and installs the script to `/usr/local/bin/bkp`.
+- User-facing usage and examples live in [README.md](README.md).
+- Planned work and future conventions live in [roadmap.md](roadmap.md).
+
+## Important Files
+
+- `src/backup.sh`: main CLI, option parsing, validation, and backup behavior.
+- `install.sh`: installer for local checkout and `curl | bash` usage.
+- `test/testlib.bash`: shared temp-directory test helpers.
+- `test/*.sh`: scenario-based shell tests; each script validates one behavior.
+
+## Working Conventions
+
+- Use Bash, not POSIX sh. Match the existing `#!/bin/bash` and `set -euo pipefail` style.
+- Prefer `readonly` for globals, `local` for function variables, quoted expansions, and arrays for command assembly.
+- Keep the implementation dependency-light: current code assumes Bash plus common coreutils.
+- Preserve the tool's safety-first behavior unless the task explicitly changes it:
+  - directories require `-r` or `--recursive`
+  - symlinks require `-s` or `--symbolic`
+  - overwriting existing backups requires `-f` or `--force`
+- Maintain support for combined short flags such as `-mrt`, long flags, and `--` argument termination.
+
+## Validation
+
+- Prefer targeted scenario tests: `bash test/<name>.sh`
+- There is no single test runner yet. If a change touches multiple behaviors, run the affected test scripts individually.
+- For core CLI checks, prefer `bash src/backup.sh --help` over installing the tool.
+- Only run `bash install.sh` when the change is specifically about installation, because it writes to `/usr/local/bin` and may invoke `sudo`.
+
+## Change Scope
+
+- Keep changes narrow and behavior-focused.
+- Do not implement roadmap items unless the task asks for them.
+- When behavior or flags change, update [README.md](README.md) in the same change.
