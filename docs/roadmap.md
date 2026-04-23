@@ -1,15 +1,8 @@
 # Improvement Roadmap
 
-## Coding Guidelines & Copilot Instructions
-
-- **Create shell coding guidelines** (`docs/coding-guidelines.md`) — ShellCheck compliance, `set -euo pipefail`, `readonly`/`local` conventions, snake_case naming, quoting rules, error handling patterns
-- **Add Copilot instructions** (`.github/copilot-instructions.md`) — project context, patterns, test conventions, reference to coding guidelines
-
 ## CI/CD — GitHub Actions
 
-- **Test runner script** (`test/run-all.sh`) — discovers and runs all tests, reports pass/fail summary, exits non-zero on any failure
 - **ShellCheck lint workflow** (`.github/workflows/lint.yml`) — runs ShellCheck on all `.sh`/`.bash` files on push and PR
-- **Multi-distro test matrix** (`.github/workflows/test.yml`) — containers: Ubuntu 22.04, Ubuntu 24.04, Debian 12 (bookworm), Fedora latest, Alpine latest. Runs `test/run-all.sh` on each
 - **Install verification** — test install.sh works on each distro, verify `bkp --help` succeeds post-install (can be part of step 13)
 
 ## Test Improvements

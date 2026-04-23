@@ -7,8 +7,24 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - ubuntu:20.04
+          - ubuntu:22.04
+          - ubuntu:24.04
+          - debian:bookworm
+          - fedora:latest
+          - alpine:latest
+
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install bash (Alpine only)
+        if: ${{ startsWith(matrix.container, 'alpine') }}
+        run: apk add --no-cache bash
 
       - name: Run tests
         run: |
