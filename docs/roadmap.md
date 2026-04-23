@@ -5,12 +5,6 @@
 - **Create shell coding guidelines** (`docs/coding-guidelines.md`) — ShellCheck compliance, `set -euo pipefail`, `readonly`/`local` conventions, snake_case naming, quoting rules, error handling patterns
 - **Add Copilot instructions** (`.github/copilot-instructions.md`) — project context, patterns, test conventions, reference to coding guidelines
 
-## Versioning System
-
-- **Publish the first GitHub Release** from an existing tag (for example `v0.0.2`) so the default installer can resolve the latest stable release
-- **Document release policy** — tag-based SemVer for stable releases, release-only remote installs, local checkouts use `git describe`
-- **Add `CHANGELOG.md`** — [Keep a Changelog](https://keepachangelog.com/) format, backfill from git history
-
 ## CI/CD — GitHub Actions
 
 - **Test runner script** (`test/run-all.sh`) — discovers and runs all tests, reports pass/fail summary, exits non-zero on any failure

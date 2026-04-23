@@ -38,3 +38,4 @@
 - Keep changes narrow and behavior-focused.
 - Do not implement roadmap items unless the task asks for them.
 - When behavior or flags change, update [README.md](README.md) and [docs](docs) in the same change.
+- Add change summary to [docs/changelog.md](docs/changelog.md) when the change is a user-facing behavior change or new feature. For internal refactors, it's optional but helpful to add a brief note.
