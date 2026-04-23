@@ -1,0 +1,22 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests
+        run: |
+          for test_script in test/*.sh; do
+            # Skip install tests — they require sudo and write to /usr/local/bin
+            case "$test_script" in
+              test/install-*.sh) continue ;;
+            esac
+            echo "==> $test_script"
+            bash "$test_script"
+          done
