@@ -37,4 +37,4 @@
 
 - Keep changes narrow and behavior-focused.
 - Do not implement roadmap items unless the task asks for them.
-- When behavior or flags change, update [README.md](README.md) in the same change.
+- When behavior or flags change, update [README.md](README.md) and [docs](docs) in the same change.
