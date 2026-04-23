@@ -2,7 +2,7 @@ name: PR Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
 
 permissions:
   contents: read
@@ -76,16 +76,33 @@ jobs:
           full_message="$(printf '%s\n\n## PR Title\n%s\n\n## PR Description\n%s\n\n## Diff\n```diff\n%s\n```' \
             "${prompt}" "${PR_TITLE}" "${PR_BODY:-No description provided.}" "${diff_content}")"
 
+          # Validate API key is configured
+          if [[ -z "${GEMINI_API_KEY}" ]]; then
+            echo "::error::GEMINI_API_KEY secret is not set. Add it in Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
           # Escape the message for JSON
           json_payload="$(jq -n --arg msg "${full_message}" '{
             "contents": [{"parts": [{"text": $msg}]}],
             "generationConfig": {"temperature": 0.2, "maxOutputTokens": 4096}
           }')"
 
-          response="$(curl -fsSL \
+          # Call Gemini API and capture HTTP status separately
+          http_code="$(curl -sL -w '%{http_code}' \
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d "${json_payload}")"
+            -d "${json_payload}" \
+            -o /tmp/gemini-response.json)"
+
+          response="$(cat /tmp/gemini-response.json)"
+
+          if [[ "${http_code}" -ne 200 ]]; then
+            echo "::error::Gemini API returned HTTP ${http_code}."
+            echo "Response body:"
+            echo "${response}"
+            exit 1
+          fi
 
           # Extract the review text from the response
           review="$(echo "${response}" | jq -r '.candidates[0].content.parts[0].text // empty')"
