@@ -1,0 +1,108 @@
+name: PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  gemini-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          diff_file="$(mktemp)"
+          gh pr diff "${{ github.event.pull_request.number }}" > "${diff_file}"
+          echo "diff_file=${diff_file}" >> "$GITHUB_OUTPUT"
+
+      - name: Review with Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DIFF_FILE: ${{ steps.diff.outputs.diff_file }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          diff_content="$(cat "${DIFF_FILE}")"
+
+          # Truncate very large diffs to stay within Gemini context limits
+          max_chars=60000
+          if [[ ${#diff_content} -gt ${max_chars} ]]; then
+            diff_content="${diff_content:0:${max_chars}}"$'\n[... diff truncated for size ...]'
+          fi
+
+          # Build the review prompt
+          read -r -d '' prompt <<'PROMPT_END' || true
+          You are a senior code reviewer for a Bash CLI project called bkp (a simple backup utility).
+          Review the following pull request diff thoroughly. Cover all of the following aspects:
+
+          **Code Quality & Bugs**
+          - Logic errors, edge cases, off-by-one mistakes
+          - Style consistency with existing code (bash, set -euo pipefail, readonly/local, quoted expansions)
+          - Unnecessary complexity or dead code
+
+          **Security**
+          - Command injection, unquoted variables in dangerous contexts
+          - Unsafe temp file handling, race conditions
+          - Secrets or credentials accidentally committed
+
+          **Bash/Shell Specific**
+          - Quoting issues, word splitting risks
+          - Portability concerns across bash versions / distros
+          - Proper use of shellcheck directives
+
+          **General**
+          - Are tests added or updated for changed behavior?
+          - Are docs (README, usage.md) updated if flags or behavior changed?
+
+          Rules:
+          - Be concise and actionable. No filler praise.
+          - If the diff is clean with no issues, say so in one sentence.
+          - Format findings as a markdown list grouped by category.
+          - For each finding, reference the file and approximate line from the diff.
+          PROMPT_END
+
+          # Assemble the full message with PR context
+          full_message="$(printf '%s\n\n## PR Title\n%s\n\n## PR Description\n%s\n\n## Diff\n```diff\n%s\n```' \
+            "${prompt}" "${PR_TITLE}" "${PR_BODY:-No description provided.}" "${diff_content}")"
+
+          # Escape the message for JSON
+          json_payload="$(jq -n --arg msg "${full_message}" '{
+            "contents": [{"parts": [{"text": $msg}]}],
+            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 4096}
+          }')"
+
+          response="$(curl -fsSL \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "${json_payload}")"
+
+          # Extract the review text from the response
+          review="$(echo "${response}" | jq -r '.candidates[0].content.parts[0].text // empty')"
+
+          if [[ -z "${review}" ]]; then
+            echo "::warning::Gemini returned no review content."
+            echo "Raw response: ${response}"
+            exit 0
+          fi
+
+          # Save review for the comment step
+          echo "${review}" > /tmp/review.md
+
+      - name: Post review comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          review="$(cat /tmp/review.md)"
+          comment="$(printf '## 🤖 Gemini PR Review\n\n%s\n\n---\n*Automated review by Gemini 2.0 Flash*' "${review}")"
+          gh pr comment "${{ github.event.pull_request.number }}" --body "${comment}"
