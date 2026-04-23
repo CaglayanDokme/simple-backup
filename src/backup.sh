@@ -8,7 +8,10 @@
 
 set -euo pipefail
 
-readonly SCRIPT_NAME="$(basename "$0")"
+SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_NAME
+readonly VERSION="@@VERSION@@"
+readonly VERSION_PLACEHOLDER="@""@VERSION@""@"
 
 FORCE=false
 FOLLOW_SYMLINKS=false
@@ -29,12 +32,37 @@ Options:
   -t, --timestamp        Add a timestamp to the backup name: <name>.<timestamp>.bkp
   -m, --move             Move the resource instead of copying.
   -d, --destination DIR  Specify a target directory for backups.
+  -v, --version          Show version information.
   -h, --help             Show this help message.
 EOF
 }
 
 error() {
     echo "Error: $*" >&2
+}
+
+resolve_git_version() {
+    local script_dir
+
+    if ! command -v git >/dev/null 2>&1; then
+        return 1
+    fi
+
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    git -C "${script_dir}" describe --tags --dirty --always 2>/dev/null
+}
+
+show_version() {
+    local resolved_version="${VERSION}"
+
+    if [[ "${resolved_version}" == "${VERSION_PLACEHOLDER}" ]]; then
+        if ! resolved_version="$(resolve_git_version)"; then
+            resolved_version="dev"
+        fi
+    fi
+
+    printf '%s\n' "${resolved_version}"
 }
 
 parse_short_flags() {
@@ -49,6 +77,10 @@ parse_short_flags() {
             r) RECURSIVE=true ;;
             t) TIMESTAMP=true ;;
             m) MOVE=true ;;
+            v)
+                show_version
+                exit 0
+                ;;
             *)
                 error "Unknown option: -${flag}"
                 show_help
@@ -93,13 +125,17 @@ parse_args() {
                 show_help
                 exit 0
                 ;;
+            -v|--version)
+                show_version
+                exit 0
+                ;;
             --)
                 shift
                 PATHS+=("$@")
                 break
                 ;;
             -?*)
-                if [[ "$1" =~ ^-[fsrtm]+$ ]]; then
+                if [[ "$1" =~ ^-[fsrtmv]+$ ]]; then
                     parse_short_flags "${1#-}"
                     shift
                 else

@@ -7,10 +7,9 @@
 
 ## Versioning System
 
-- **Add `--version` flag** to backup.sh — `VERSION` variable at top of script, `-v`/`--version` in parser
-- **Tag-based SemVer** — start at `v0.1.0`, document policy in CONTRIBUTING.md
+- **Publish the first GitHub Release** from an existing tag (for example `v0.0.2`) so the default installer can resolve the latest stable release
+- **Document release policy** — tag-based SemVer for stable releases, release-only remote installs, local checkouts use `git describe`
 - **Add `CHANGELOG.md`** — [Keep a Changelog](https://keepachangelog.com/) format, backfill from git history
-- **Create first GitHub Release** (`v0.1.0`) — update install.sh to optionally fetch a specific version tag instead of `master`
 
 ## CI/CD — GitHub Actions
 

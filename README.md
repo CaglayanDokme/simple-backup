@@ -4,7 +4,7 @@ A simple, robust backup utility for the command line.
 
 ## Quick Start
 
-Install `bkp` with a single command:
+Install the latest stable `bkp` release with a single command:
 
 **Using curl:**
 ```bash
@@ -19,6 +19,7 @@ wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/i
 Once installed, verify it works:
 ```bash
 bkp --help
+bkp --version
 ```
 
 ## Features
@@ -30,6 +31,7 @@ bkp --help
 - **Timestamps:** Add unique timestamps to backup filenames with `-t`.
 - **Custom Destinations:** Specify a target directory for backups with `-d`.
 - **Safety First:** Prevents accidental overwrites unless `-f` is used.
+- **Version-Aware Installs:** Release installs print exact tags, while dev checkouts report `git describe` output.
 
 ### Why does it exist / Is it beneficial?
 
@@ -62,6 +64,7 @@ bkp [OPTIONS] <path1> [path2] ...
 - `-t, --timestamp`: Add a timestamp to the backup name: `<name>.<timestamp>.bkp`.
 - `-m, --move`: Move the resource instead of copying it.
 - `-d, --destination DIR`: Specify a target directory for backups.
+- `-v, --version`: Show version information.
 - `-h, --help`: Show this help message.
 
 ## Installation
@@ -73,9 +76,26 @@ The quickest way to install `bkp` is using the one-liner above in [Quick Start](
 **What the one-liner does:**
 - Downloads `install.sh` from GitHub
 - Pipes it to bash for execution
-- The script fetches `src/backup.sh` from GitHub
+- The script resolves the latest published GitHub Release and fetches that tagged `src/backup.sh`
+- Embeds the release tag into the installed script so `bkp --version` reports the installed release
 - Installs `bkp` to `/usr/local/bin/` (requires `sudo` or running as root)
 - Makes the command available system-wide
+
+If no GitHub Release exists yet, the installer fails with a clear error instead of falling back to `master`.
+
+### Install a Specific Release Tag
+
+Use `--version` to install an exact tagged release:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash -s -- --version v0.0.2
+```
+
+```bash
+wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash -s -- --version v0.0.2
+```
+
+This installs the requested tag and embeds that exact version string into the installed binary.
 
 ### Alternative: Clone and Install
 
@@ -89,6 +109,7 @@ cd simple-backup
 
 This will:
 - Use the local `src/backup.sh` file if available
+- Embed the local checkout version from `git describe --tags --dirty --always`
 - Install to `/usr/local/bin/bkp`
 - Use `sudo` automatically if needed
 
@@ -97,8 +118,8 @@ This will:
 For specific setups or troubleshooting:
 
 ```bash
-# Download the script
-curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/src/backup.sh -o bkp
+# Download a specific release tag
+curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/v0.0.2/src/backup.sh -o bkp
 
 # Make it executable
 chmod +x bkp
@@ -107,6 +128,8 @@ chmod +x bkp
 sudo mv bkp /usr/local/bin/
 ```
 
+Manual installs do not embed release metadata. If you want `bkp --version` to report an installed release reliably, use `install.sh` instead.
+
 ### Verification
 
 After installation, verify `bkp` is working:
@@ -114,7 +137,16 @@ After installation, verify `bkp` is working:
 ```bash
 which bkp          # Should show: /usr/local/bin/bkp
 bkp --help         # Should display help message
+bkp --version      # Should display the installed release or local checkout version
 ```
+
+## Versioning Conventions
+
+- Stable releases use SemVer tags such as `v0.0.2`.
+- Remote installs with no installer arguments always target the latest published GitHub Release.
+- `install.sh --version <tag>` installs a specific tagged release.
+- Installed release binaries print the exact embedded tag with `bkp --version`.
+- Local checkouts and local installs report `git describe --tags --dirty --always`, so unreleased work includes tag ancestry and a commit hash.
 
 ## Examples
 
