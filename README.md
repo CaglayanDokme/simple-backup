@@ -50,6 +50,12 @@ bkp --version
 - **Composable flags** — combined short flags (`-mrt`), timestamp naming, custom destination
 - **Zero dependencies** — pure bash + coreutils, runs anywhere
 
+## Verified on
+- Ubuntu (20.04, 22.04, 24.04)
+- Debian 12 (bookworm)
+- Fedora 42
+- Alpine 3.21
+
 ---
 
 See [docs](docs) for further details on installation, usage, and more.

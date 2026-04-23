@@ -16,8 +16,8 @@ jobs:
           - ubuntu:22.04
           - ubuntu:24.04
           - debian:bookworm
-          - fedora:latest
-          - alpine:latest
+          - fedora:42
+          - alpine:3.21
 
     steps:
       - uses: actions/checkout@v4
@@ -48,8 +48,8 @@ jobs:
           - ubuntu:22.04
           - ubuntu:24.04
           - debian:bookworm
-          - fedora:latest
-          - alpine:latest
+          - fedora:42
+          - alpine:3.21
 
     steps:
       - uses: actions/checkout@v4
