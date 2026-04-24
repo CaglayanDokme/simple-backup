@@ -6,6 +6,7 @@ bkp [OPTIONS] <path1> [path2] ...
 
 ## Options
 
+- `-c, --compress`: Create a compressed tar.gz backup. Requires `tar` and `gzip` only when used.
 - `-f, --force`: Overwrite existing backup files or directories.
 - `-s, --symbolic`: Follow symbolic links. By default, errors if a symlink is encountered.
 - `-r, --recursive`: Allow backing up directories.
@@ -22,17 +23,22 @@ bkp [OPTIONS] <path1> [path2] ...
    bkp file.txt # Creates file.txt.bkp
    ```
 
-2. **Move and Timestamp:**
+2. **Compressed Backup:**
+   ```bash
+   bkp -c file.txt # Creates file.txt.bkp.tar.gz
+   ```
+
+3. **Move and Timestamp:**
    ```bash
    bkp -mt file.txt # Moves file.txt to file.txt.20231024.bkp
    ```
 
-3. **Recursive Folder Backup:**
+4. **Recursive Folder Backup:**
    ```bash
    bkp -r my_folder # Creates my_folder.bkp
    ```
 
-4. **Follow Symlinks:**
+5. **Follow Symlinks:**
    ```bash
    bkp -s my_link # Backs up the actual file my_link points to.
    ```

@@ -14,6 +14,7 @@ readonly VERSION="@@VERSION@@"
 readonly VERSION_PLACEHOLDER="@""@VERSION@""@"
 
 FORCE=false
+COMPRESS=false
 FOLLOW_SYMLINKS=false
 RECURSIVE=false
 TIMESTAMP=false
@@ -27,6 +28,7 @@ Usage: ${SCRIPT_NAME} [OPTIONS] <path1> [path2] ...
 
 Options:
   -f, --force            Overwrite existing backup files or directories.
+  -c, --compress         Create a compressed tar.gz backup.
   -s, --symbolic         Follow symbolic links. By default, errors if a symlink is encountered.
   -r, --recursive        Allow backing up directories.
   -t, --timestamp        Add a timestamp to the backup name: <name>.<timestamp>.bkp
@@ -72,6 +74,7 @@ parse_short_flags() {
     for (( index = 0; index < ${#flags}; index++ )); do
         flag="${flags:index:1}"
         case "${flag}" in
+            c) COMPRESS=true ;;
             f) FORCE=true ;;
             s) FOLLOW_SYMLINKS=true ;;
             r) RECURSIVE=true ;;
@@ -93,6 +96,10 @@ parse_short_flags() {
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            -c|--compress)
+                COMPRESS=true
+                shift
+                ;;
             -f|--force)
                 FORCE=true
                 shift
@@ -135,7 +142,7 @@ parse_args() {
                 break
                 ;;
             -?*)
-                if [[ "$1" =~ ^-[fsrtmv]+$ ]]; then
+                if [[ "$1" =~ ^-[cfsrtmv]+$ ]]; then
                     parse_short_flags "${1#-}"
                     shift
                 else
@@ -152,11 +159,22 @@ parse_args() {
     done
 }
 
+validate_compress_dependencies() {
+    if ! command -v tar >/dev/null 2>&1 || ! command -v gzip >/dev/null 2>&1; then
+        error "Compression requires 'tar' and 'gzip' to be installed."
+        exit 1
+    fi
+}
+
 validate_args() {
     if [[ ${#PATHS[@]} -eq 0 ]]; then
         error "No paths specified."
         show_help
         exit 1
+    fi
+
+    if [[ "${COMPRESS}" == "true" ]]; then
+        validate_compress_dependencies
     fi
 
     if [[ -n "${DESTINATION}" ]]; then
@@ -191,6 +209,10 @@ build_backup_path() {
 
     backup_name="${backup_name}.bkp"
 
+    if [[ "${COMPRESS}" == "true" ]]; then
+        backup_name="${backup_name}.tar.gz"
+    fi
+
     if [[ -n "${DESTINATION}" ]]; then
         printf '%s\n' "${DESTINATION}/${backup_name}"
     else
@@ -216,8 +238,10 @@ prepare_destination() {
 run_backup_operation() {
     local target="$1"
     local final_dest="$2"
+    local target_dir target_name
     local -a cp_cmd=("cp")
     local -a mv_cmd=("mv")
+    local -a tar_cmd=("tar" "-czf" "${final_dest}")
 
     if [[ "${RECURSIVE}" == "true" ]]; then
         if [[ "${FOLLOW_SYMLINKS}" == "true" ]]; then
@@ -228,6 +252,24 @@ run_backup_operation() {
     fi
 
     prepare_destination "${final_dest}"
+
+    if [[ "${COMPRESS}" == "true" ]]; then
+        target_dir="$(dirname "${target}")"
+        target_name="$(basename "${target}")"
+
+        if [[ "${FOLLOW_SYMLINKS}" == "true" ]]; then
+            tar_cmd+=("--dereference")
+        fi
+
+        tar_cmd+=("-C" "${target_dir}" "${target_name}")
+        "${tar_cmd[@]}"
+
+        if [[ "${MOVE}" == "true" ]]; then
+            rm -rf -- "${target}"
+        fi
+
+        return 0
+    fi
 
     if [[ "${MOVE}" == "true" ]]; then
         if [[ "${FOLLOW_SYMLINKS}" == "true" ]]; then

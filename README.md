@@ -25,6 +25,7 @@ bkp --version
 ## Features
 
 - **Copy or Move:** Backup by copying (default) or moving (`-m`).
+- **Compression:** Create `.tar.gz` archives with `-c` when you want a single compressed backup artifact.
 - **Multiple Targets:** Backup multiple files or directories in one go.
 - **Recursive:** Support for backing up folders with `-r`.
 - **Symlink Awareness:** Safely handle symbolic links. Force resolution with `-s`.
@@ -47,8 +48,7 @@ bkp --version
 
 - **Symlink-safe by default** — refuses to silently break/dereference symlinks without `-s`
 - **Safety-first** — won't overwrite existing backups without `-f`; requires explicit `-r` for directories
-- **Composable flags** — combined short flags (`-mrt`), timestamp naming, custom destination
-- **Zero dependencies** — pure bash + coreutils, runs anywhere
+- **Lean defaults** — regular backups only need bash + coreutils; compression additionally uses `tar` and `gzip` when requested
 
 ## Verified on
 - Ubuntu (20.04, 22.04, 24.04)
