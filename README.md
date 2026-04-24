@@ -16,6 +16,9 @@ curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/
 wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash
 ```
 
+This downloads the pre-built release artifact from GitHub Releases and installs it
+via symlink (`bkp -> bkp-v0.2.0`), keeping previous versions for rollback.
+
 Once installed, verify it works:
 ```bash
 bkp --help
@@ -28,6 +31,7 @@ bkp --version
 - **Compression:** Create `.tar.gz` archives with `-c` when you want a single compressed backup artifact.
 - **Multiple Targets:** Backup multiple files or directories in one go.
 - **Recursive:** Support for backing up folders with `-r`.
+- **Pattern Exclusions:** Skip matching files or folders with repeatable `-e` glob patterns.
 - **Symlink Awareness:** Safely handle symbolic links. Force resolution with `-s`.
 - **Timestamps:** Add unique timestamps to backup filenames with `-t`.
 - **Custom Destinations:** Specify a target directory for backups with `-d`.

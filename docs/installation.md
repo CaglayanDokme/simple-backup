@@ -2,64 +2,74 @@
 
 ## One-Liner Installation (Recommended)
 
-The quickest way to install `bkp` is using the one-liner above in [Quick Start](#quick-start). This downloads the installer script from GitHub and pipes it directly to bash.
+Install the latest release with a single command:
+
+**Using curl:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash
+```
+
+**Using wget:**
+```bash
+wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash
+```
 
 **What the one-liner does:**
-- Downloads `install.sh` from GitHub
-- Pipes it to bash for execution
-- The script resolves the latest published GitHub Release and fetches that tagged `src/backup.sh`
-- Embeds the release tag into the installed script so `bkp --version` reports the installed release
-- Installs `bkp` to `/usr/local/bin/` (requires `sudo` or running as root)
-- Makes the command available system-wide
-
-If no GitHub Release exists yet, the installer fails with a clear error instead of falling back to `master`.
+- Downloads the installer from the repository
+- Fetches the pre-built `bkp` binary from the latest GitHub Release
+- Installs via symlink: `/usr/local/bin/bkp -> bkp-v0.2.0`
+- Previous versions are kept alongside new ones for rollback
+- Uses `sudo` automatically if needed
 
 ## Install a Specific Release Tag
 
 Use `--version` to install an exact tagged release:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash -s -- --version v0.0.2
+curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash -s -- --version v0.2.0
 ```
+
+## Direct Download (No Installer)
+
+Download the pre-built binary directly from GitHub Releases:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash -s -- --version v0.0.2
+curl -fsSL https://github.com/CaglayanDokme/simple-backup/releases/latest/download/bkp | sudo install /dev/stdin /usr/local/bin/bkp
 ```
 
-This installs the requested tag and embeds that exact version string into the installed binary.
+This skips the symlink versioning but is useful for minimal environments.
 
-## Alternative: Clone and Install
+## Developer: Clone and Install
 
-If you prefer to review the code first or want to keep the repository locally:
+For development or code review, use the developer installer:
 
 ```bash
 git clone https://github.com/CaglayanDokme/simple-backup.git
 cd simple-backup
-./install.sh
+bash scripts/dev-install.sh
 ```
 
 This will:
-- Use the local `src/backup.sh` file if available
-- Embed the local checkout version from `git describe --tags --dirty --always`
-- Install to `/usr/local/bin/bkp`
-- Use `sudo` automatically if needed
+- Use the local `src/backup.sh` from your checkout
+- Embed the version from `git describe --tags --dirty --always`
+- Install via symlink, same as the release installer
 
-## Alternative: Manual Installation
+## Symlink Versioning
 
-For specific setups or troubleshooting:
+Both installers use symlink-based versioning:
 
-```bash
-# Download a specific release tag
-curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/v0.0.2/src/backup.sh -o bkp
-
-# Make it executable
-chmod +x bkp
-
-# Install to system path
-sudo mv bkp /usr/local/bin/
+```
+/usr/local/bin/bkp          -> bkp-v0.2.0   (symlink, current)
+/usr/local/bin/bkp-v0.2.0                    (binary)
+/usr/local/bin/bkp-v0.1.0                    (previous, kept)
 ```
 
-Manual installs do not embed release metadata. If you want `bkp --version` to report an installed release reliably, use `install.sh` instead.
+Upgrading installs the new version alongside the old one and updates the symlink.
+To roll back, manually re-point the symlink:
+
+```bash
+sudo ln -sf bkp-v0.1.0 /usr/local/bin/bkp
+```
 
 ## Verification
 
@@ -69,4 +79,5 @@ After installation, verify `bkp` is working:
 which bkp          # Should show: /usr/local/bin/bkp
 bkp --help         # Should display help message
 bkp --version      # Should display the installed release or local checkout version
+ls -l $(which bkp) # Should show symlink target
 ```

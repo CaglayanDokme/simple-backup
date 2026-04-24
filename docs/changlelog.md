@@ -1,5 +1,16 @@
 # Change Logs
 
+## v0.3.0 - April 24, 2026
+### New features
+- Added repeatable `-e` / `--exclude PATTERN` glob filtering for copy, move, and compressed backups.
+
+### Improvements
+- Simplified `install.sh` to a lean release installer that downloads pre-built artifacts from GitHub Releases.
+- Added `scripts/dev-install.sh` for developer installs from local repository checkouts.
+- Both installers now use symlink-based versioning (`bkp -> bkp-v0.2.0`) for side-by-side version management and rollback.
+- Added `.github/workflows/release.yml`: automated GitHub Release creation on tag push with pre-baked `bkp` artifact and changelog-based release notes.
+- Dropped legacy awk-based version injection for pre-v0.2.0 scripts.
+
 ## v0.2.0 - April 24, 2026
 ### New features
 - Added `-c` / `--compress` to create `.bkp.tar.gz` backups using `tar` and `gzip`.

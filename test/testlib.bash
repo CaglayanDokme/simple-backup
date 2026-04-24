@@ -16,6 +16,10 @@ readonly BKP_SCRIPT
 INSTALL_SCRIPT="${REPO_ROOT}/install.sh"
 export INSTALL_SCRIPT
 readonly INSTALL_SCRIPT
+# shellcheck disable=SC2034
+DEV_INSTALL_SCRIPT="${REPO_ROOT}/scripts/dev-install.sh"
+export DEV_INSTALL_SCRIPT
+readonly DEV_INSTALL_SCRIPT
 
 TEST_DIR=""
 

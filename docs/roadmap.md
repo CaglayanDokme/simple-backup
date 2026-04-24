@@ -1,6 +1,7 @@
 # Improvement Roadmap
 
 ## Feature Enhancements
-- Add `--exclude` flag to backup.sh
 - Add `--dry-run` flag to backup.sh — show what would be backed up without actual action
-- `install.sh` shall warn and ask for confirmation if `bkp` is already installed before overwriting (It shall also print whether updating or downgrading, and the existing vs new version numbers.)
+- ~~Install with symbolic link so that updates can be done without needing to overwrite the existing file~~ — Done: both installers use `bkp -> bkp-v0.2.0` symlinks.
+- ~~Releases shall not include the whole source code, but the program itself and the install script, to avoid confusion and reduce download size.~~ — Done: release workflow attaches a pre-built `bkp` binary.
+  - Releasing in DEB/RPM format can also be considered for easier installation and updates.
