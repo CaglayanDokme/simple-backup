@@ -6,12 +6,12 @@ Install the latest release with a single command:
 
 **Using curl:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash
 ```
 
 **Using wget:**
 ```bash
-wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/main/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash
 ```
 
 **What the one-liner does:**
@@ -26,7 +26,7 @@ wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/main/ins
 Use `--version` to install an exact tagged release:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/main/install.sh | bash -s -- --version v0.2.0
+curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash -s -- --version v0.2.0
 ```
 
 ## Direct Download (No Installer)
