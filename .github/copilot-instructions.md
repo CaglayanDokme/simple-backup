@@ -28,6 +28,7 @@
 
 ## Validation
 
+- When adding new features or flags, if not already present, add corresponding test scripts that validate the new behavior in isolation.
 - Prefer targeted scenario tests: `bash test/<name>.sh`
 - There is no single test runner yet. If a change touches multiple behaviors, run the affected test scripts individually.
 - For core CLI checks, prefer `bash src/backup.sh --help` over installing the tool.
