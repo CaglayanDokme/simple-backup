@@ -1,5 +1,9 @@
 # Change Logs
 
+## Unreleased
+### New features
+- Added repeatable `-e` / `--exclude PATTERN` glob filtering for copy, move, and compressed backups.
+
 ## v0.2.0 - April 24, 2026
 ### New features
 - Added `-c` / `--compress` to create `.bkp.tar.gz` backups using `tar` and `gzip`.

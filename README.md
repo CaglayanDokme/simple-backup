@@ -28,6 +28,7 @@ bkp --version
 - **Compression:** Create `.tar.gz` archives with `-c` when you want a single compressed backup artifact.
 - **Multiple Targets:** Backup multiple files or directories in one go.
 - **Recursive:** Support for backing up folders with `-r`.
+- **Pattern Exclusions:** Skip matching files or folders with repeatable `-e` glob patterns.
 - **Symlink Awareness:** Safely handle symbolic links. Force resolution with `-s`.
 - **Timestamps:** Add unique timestamps to backup filenames with `-t`.
 - **Custom Destinations:** Specify a target directory for backups with `-d`.
