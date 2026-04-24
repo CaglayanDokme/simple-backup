@@ -1,6 +1,6 @@
 # Change Logs
 
-## Unreleased
+## v0.3.0 - April 24, 2026
 ### New features
 - Added repeatable `-e` / `--exclude PATTERN` glob filtering for copy, move, and compressed backups.
 
