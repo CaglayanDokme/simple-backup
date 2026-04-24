@@ -8,13 +8,16 @@ Install the latest stable `bkp` release with a single command:
 
 **Using curl:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/main/install.sh | bash
 ```
 
 **Using wget:**
 ```bash
-wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/main/install.sh | bash
 ```
+
+This downloads the pre-built release artifact from GitHub Releases and installs it
+via symlink (`bkp -> bkp-v0.2.0`), keeping previous versions for rollback.
 
 Once installed, verify it works:
 ```bash
