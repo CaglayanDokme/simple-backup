@@ -1,0 +1,78 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - ubuntu:20.04
+          - ubuntu:22.04
+          - ubuntu:24.04
+          - debian:bookworm
+          - fedora:42
+          - alpine:3.21
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install bash (Alpine only)
+        if: ${{ startsWith(matrix.container, 'alpine') }}
+        run: apk add --no-cache bash
+
+      - name: Run tests
+        run: |
+          for test_script in test/*.sh; do
+            # Skip install tests — handled in the separate install-test job
+            case "$test_script" in
+              test/install-*.sh) continue ;;
+            esac
+            echo "==> $test_script"
+            bash "$test_script"
+          done
+
+  install-test:
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - ubuntu:20.04
+          - ubuntu:22.04
+          - ubuntu:24.04
+          - debian:bookworm
+          - fedora:42
+          - alpine:3.21
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # git is required by testlib.bash's current_repo_version() to embed the
+      # correct version string into the installed script and verify it matches.
+      # bash is not present by default on Alpine.
+      - name: Install dependencies (Alpine)
+        if: ${{ startsWith(matrix.container, 'alpine') }}
+        run: apk add --no-cache bash git
+
+      - name: Install dependencies (Fedora)
+        if: ${{ startsWith(matrix.container, 'fedora') }}
+        run: dnf install -y git
+
+      - name: Install dependencies (Debian/Ubuntu)
+        if: ${{ startsWith(matrix.container, 'ubuntu') || startsWith(matrix.container,
+          'debian') }}
+        run: apt-get update -q && apt-get install -y -q git
+
+      - name: Run install tests
+        run: |
+          for test_script in test/install-*.sh; do
+            echo "==> $test_script"
+            bash "$test_script"
+          done

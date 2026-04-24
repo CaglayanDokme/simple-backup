@@ -100,7 +100,7 @@ resolve_latest_release_tag() {
 
     case "${effective_url}" in
         "${GITHUB_REPO_URL}/releases/tag/"*)
-            release_tag="${effective_url#${GITHUB_REPO_URL}/releases/tag/}"
+            release_tag="${effective_url#"${GITHUB_REPO_URL}"/releases/tag/}"
             release_tag="${release_tag%%[?#]*}"
             release_tag="${release_tag%/}"
             ;;

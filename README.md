@@ -25,6 +25,7 @@ bkp --version
 ## Features
 
 - **Copy or Move:** Backup by copying (default) or moving (`-m`).
+- **Compression:** Create `.tar.gz` archives with `-c` when you want a single compressed backup artifact.
 - **Multiple Targets:** Backup multiple files or directories in one go.
 - **Recursive:** Support for backing up folders with `-r`.
 - **Symlink Awareness:** Safely handle symbolic links. Force resolution with `-s`.
@@ -47,125 +48,14 @@ bkp --version
 
 - **Symlink-safe by default** — refuses to silently break/dereference symlinks without `-s`
 - **Safety-first** — won't overwrite existing backups without `-f`; requires explicit `-r` for directories
-- **Composable flags** — combined short flags (`-mrt`), timestamp naming, custom destination
-- **Zero dependencies** — pure bash + coreutils, runs anywhere
+- **Lean defaults** — regular backups only need bash + coreutils; compression additionally uses `tar` and `gzip` when requested
 
-## Usage
+## Verified on
+- Ubuntu (20.04, 22.04, 24.04)
+- Debian 12 (bookworm)
+- Fedora 42
+- Alpine 3.21
 
-```bash
-bkp [OPTIONS] <path1> [path2] ...
-```
+---
 
-### Options
-
-- `-f, --force`: Overwrite existing backup files or directories.
-- `-s, --symbolic`: Follow symbolic links. By default, errors if a symlink is encountered.
-- `-r, --recursive`: Allow backing up directories.
-- `-t, --timestamp`: Add a timestamp to the backup name: `<name>.<timestamp>.bkp`.
-- `-m, --move`: Move the resource instead of copying it.
-- `-d, --destination DIR`: Specify a target directory for backups.
-- `-v, --version`: Show version information.
-- `-h, --help`: Show this help message.
-
-## Installation
-
-### One-Liner Installation (Recommended)
-
-The quickest way to install `bkp` is using the one-liner above in [Quick Start](#quick-start). This downloads the installer script from GitHub and pipes it directly to bash.
-
-**What the one-liner does:**
-- Downloads `install.sh` from GitHub
-- Pipes it to bash for execution
-- The script resolves the latest published GitHub Release and fetches that tagged `src/backup.sh`
-- Embeds the release tag into the installed script so `bkp --version` reports the installed release
-- Installs `bkp` to `/usr/local/bin/` (requires `sudo` or running as root)
-- Makes the command available system-wide
-
-If no GitHub Release exists yet, the installer fails with a clear error instead of falling back to `master`.
-
-### Install a Specific Release Tag
-
-Use `--version` to install an exact tagged release:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash -s -- --version v0.0.2
-```
-
-```bash
-wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/install.sh | bash -s -- --version v0.0.2
-```
-
-This installs the requested tag and embeds that exact version string into the installed binary.
-
-### Alternative: Clone and Install
-
-If you prefer to review the code first or want to keep the repository locally:
-
-```bash
-git clone https://github.com/CaglayanDokme/simple-backup.git
-cd simple-backup
-./install.sh
-```
-
-This will:
-- Use the local `src/backup.sh` file if available
-- Embed the local checkout version from `git describe --tags --dirty --always`
-- Install to `/usr/local/bin/bkp`
-- Use `sudo` automatically if needed
-
-### Alternative: Manual Installation
-
-For specific setups or troubleshooting:
-
-```bash
-# Download a specific release tag
-curl -fsSL https://raw.githubusercontent.com/CaglayanDokme/simple-backup/v0.0.2/src/backup.sh -o bkp
-
-# Make it executable
-chmod +x bkp
-
-# Install to system path
-sudo mv bkp /usr/local/bin/
-```
-
-Manual installs do not embed release metadata. If you want `bkp --version` to report an installed release reliably, use `install.sh` instead.
-
-### Verification
-
-After installation, verify `bkp` is working:
-
-```bash
-which bkp          # Should show: /usr/local/bin/bkp
-bkp --help         # Should display help message
-bkp --version      # Should display the installed release or local checkout version
-```
-
-## Versioning Conventions
-
-- Stable releases use SemVer tags such as `v0.0.2`.
-- Remote installs with no installer arguments always target the latest published GitHub Release.
-- `install.sh --version <tag>` installs a specific tagged release.
-- Installed release binaries print the exact embedded tag with `bkp --version`.
-- Local checkouts and local installs report `git describe --tags --dirty --always`, so unreleased work includes tag ancestry and a commit hash.
-
-## Examples
-
-1. **Basic Backup:**
-   ```bash
-   bkp file.txt # Creates file.txt.bkp
-   ```
-
-2. **Move and Timestamp:**
-   ```bash
-   bkp -mt file.txt # Moves file.txt to file.txt.20231024.bkp
-   ```
-
-3. **Recursive Folder Backup:**
-   ```bash
-   bkp -r my_folder # Creates my_folder.bkp
-   ```
-
-4. **Follow Symlinks:**
-   ```bash
-   bkp -s my_link # Backs up the actual file my_link points to.
-   ```
+See [docs](docs) for further details on installation, usage, and more.
