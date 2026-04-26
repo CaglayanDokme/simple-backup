@@ -12,6 +12,7 @@
 
 - `src/backup.sh`: main CLI, option parsing, validation, and backup behavior.
 - `install.sh`: installer for local checkout and `curl | bash` usage.
+- `test/run-all.sh`: unified test runner for the full shell test suite.
 - `test/testlib.bash`: shared temp-directory test helpers.
 - `test/*.sh`: scenario-based shell tests; each script validates one behavior.
 
@@ -29,8 +30,8 @@
 ## Validation
 
 - When adding new features or flags, if not already present, add corresponding test scripts that validate the new behavior in isolation.
+- Run the full suite with `bash test/run-all.sh`.
 - Prefer targeted scenario tests: `bash test/<name>.sh`
-- There is no single test runner yet. If a change touches multiple behaviors, run the affected test scripts individually.
 - For core CLI checks, prefer `bash src/backup.sh --help` over installing the tool.
 - Only run `bash install.sh` when the change is specifically about installation, because it writes to `/usr/local/bin` and may invoke `sudo`.
 
@@ -40,5 +41,5 @@
 - Do not implement roadmap items unless the task asks for them.
 - When behavior or flags change, update [README.md](README.md) and [docs](docs) in the same change.
 - Add change summary to [docs/changelog.md](docs/changelog.md) when the change is a user-facing behavior change or new feature. For internal refactors, it's optional but helpful to add a brief note.
-- After completing a change, run all test scripts to ensure no regressions. If a test fails, fix the issue before finalizing the change.
+- After completing a change, run `bash test/run-all.sh` to ensure no regressions. If a test fails, fix the issue before finalizing the change.
 - Finalize the change with a commit message draft that includes a concise summary of the change and references any relevant test scripts or documentation updates.

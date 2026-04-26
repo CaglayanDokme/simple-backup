@@ -2,6 +2,8 @@
 
 ## Unreleased
 ### Improvements
+- Added `test/run-all.sh` so the full shell test suite can run in a single command locally, in CI, and from VS Code.
+- Removed install-specific tests from the default suite and routed CI through the unified test runner.
 - Automatically omit top-level `.bkp` and `.bkp.tar.gz` inputs from new backup runs and print a warning for each omitted path.
 
 ## v0.4.1 - April 26, 2026
