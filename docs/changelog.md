@@ -1,5 +1,12 @@
 # Change Logs
 
+## v0.4.3 - April 26, 2026
+### Improvements
+- Extracted the release workflow shell bodies into `scripts/extract-release-notes.sh` and `scripts/build-release.sh`.
+- Added `scripts/check-release.sh` to orchestrate release validation: version detection, SemVer progression, note extraction, and artifact build.
+- Simplified `.github/workflows/release-check.yml` to a single script call; requires a concrete versioned changelog heading before merging to master.
+- Added SemVer progression validation to `scripts/extract-release-notes.sh`.
+
 ## v0.4.2 - April 26, 2026
 ### Improvements
 - Added `test/run-all.sh` so the full shell test suite can run in a single command locally, in CI, and from VS Code.
