@@ -12,6 +12,7 @@ SCRIPT_NAME="$(basename "$0")"
 readonly SCRIPT_NAME
 readonly VERSION="@@VERSION@@"
 readonly VERSION_PLACEHOLDER="@""@VERSION@""@"
+readonly INVOCATION_TIMESTAMP="$(date +%Y%m%d%H%M%S)"
 
 FORCE=false
 COMPRESS_MODE=""
@@ -563,7 +564,7 @@ build_backup_path() {
     backup_name="${base_name}"
 
     if [[ "${TIMESTAMP}" == "true" ]]; then
-        backup_name="${backup_name}.$(date +%Y%m%d%H%M%S)"
+        backup_name="${backup_name}.${INVOCATION_TIMESTAMP}"
     fi
 
     backup_name="${backup_name}.bkp"
@@ -587,7 +588,7 @@ build_merged_backup_path() {
     fi
 
     if [[ "${TIMESTAMP}" == "true" ]]; then
-        archive_name="${archive_name}.$(date +%Y%m%d%H%M%S)"
+        archive_name="${archive_name}.${INVOCATION_TIMESTAMP}"
     fi
 
     archive_name="${archive_name}.bkp.tar.gz"
