@@ -1,5 +1,9 @@
 # Change Logs
 
+## Unreleased
+### Improvements
+- Automatically omit top-level `.bkp` and `.bkp.tar.gz` inputs from new backup runs and print a warning for each omitted path.
+
 ## v0.4.1 - April 26, 2026
 ### Improvements
 - Reused a single invocation timestamp for all `--timestamp` backups so multi-file runs produce consistent backup names.

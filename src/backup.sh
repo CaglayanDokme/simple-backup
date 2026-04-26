@@ -314,6 +314,42 @@ pattern_matches() {
     return 1
 }
 
+is_backup_artifact() {
+    local path="$1"
+    local base_name
+
+    base_name="$(basename -- "${path}")"
+
+    case "${base_name}" in
+        *.bkp|*.bkp.tar.gz)
+            return 0
+            ;;
+    esac
+
+    return 1
+}
+
+filter_backup_artifacts() {
+    local path
+    local -a filtered_paths=()
+
+    for path in "${PATHS[@]}"; do
+        if is_backup_artifact "${path}"; then
+            printf 'Warning: omitting backup file: %s\n' "${path}" >&2
+            continue
+        fi
+
+        filtered_paths+=("${path}")
+    done
+
+    if [[ ${#filtered_paths[@]} -eq 0 ]]; then
+        error "All specified paths are backup files."
+        exit 1
+    fi
+
+    PATHS=("${filtered_paths[@]}")
+}
+
 entry_matches_exclude() {
     local target_name="$1"
     local relative_path="$2"
@@ -768,6 +804,7 @@ main() {
 
     parse_args "$@"
     validate_args
+    filter_backup_artifacts
 
     if [[ "${COMPRESS_MODE}" == "merged" && ( ${#PATHS[@]} -gt 1 || -n "${ARCHIVE_NAME}" ) ]]; then
         backup_merged
