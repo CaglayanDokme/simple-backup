@@ -1,6 +1,6 @@
 # Change Logs
 
-## Unreleased
+## v0.4.3 - April 26, 2026
 ### Improvements
 - Extracted the release workflow shell bodies into `scripts/extract-release-notes.sh` and `scripts/build-release.sh`.
 - Added `scripts/check-release.sh` to orchestrate release validation: version detection, SemVer progression, note extraction, and artifact build.
