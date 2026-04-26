@@ -1,6 +1,6 @@
 # Change Logs
 
-## Unreleased
+## v0.4.1 - April 26, 2026
 ### Improvements
 - Reused a single invocation timestamp for all `--timestamp` backups so multi-file runs produce consistent backup names.
 - Made compression tool checks configurable via `BKP_TAR_BIN` and `BKP_GZIP_BIN`, which stabilizes missing-tool tests without PATH stubbing.
