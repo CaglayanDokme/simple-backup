@@ -19,7 +19,7 @@ jobs:
         id: notes
         run: |
           tag="${GITHUB_REF_NAME}"
-          changelog="docs/changlelog.md"
+          changelog="docs/changelog.md"
 
           # Find the header line for this version (e.g., "## v0.2.0 - April 24, 2026")
           header_pattern="^## ${tag} -"
