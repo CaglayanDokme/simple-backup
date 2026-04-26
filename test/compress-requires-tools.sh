@@ -7,18 +7,12 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/testlib.bash"
 
 setup_test_env
 
-mkdir fake-bin
-ln -s "$(command -v bash)" fake-bin/bash
-ln -s "$(command -v basename)" fake-bin/basename
-ln -s "$(command -v dirname)" fake-bin/dirname
-ln -s "$(command -v cp)" fake-bin/cp
-
 printf 'plain\n' > plain.txt
-PATH="${PWD}/fake-bin" bash "${BKP_SCRIPT}" plain.txt
+BKP_TAR_BIN=missing-tar BKP_GZIP_BIN=missing-gzip bash "${BKP_SCRIPT}" plain.txt
 [[ -f plain.txt.bkp ]]
 
 printf 'archive\n' > archive.txt
-if PATH="${PWD}/fake-bin" bash "${BKP_SCRIPT}" -c archive.txt >compress.out 2>compress.err; then
+if BKP_TAR_BIN=missing-tar BKP_GZIP_BIN=missing-gzip bash "${BKP_SCRIPT}" -c archive.txt >compress.out 2>compress.err; then
     echo "Expected compressed backup to fail when tar and gzip are unavailable" >&2
     exit 1
 fi

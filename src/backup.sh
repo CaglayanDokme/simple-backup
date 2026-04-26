@@ -13,6 +13,14 @@ readonly SCRIPT_NAME
 readonly VERSION="@@VERSION@@"
 readonly VERSION_PLACEHOLDER="@""@VERSION@""@"
 
+INVOCATION_TIMESTAMP="$(date +%Y%m%d%H%M%S)"
+readonly INVOCATION_TIMESTAMP
+
+TAR_BIN="${BKP_TAR_BIN:-tar}"
+readonly TAR_BIN
+GZIP_BIN="${BKP_GZIP_BIN:-gzip}"
+readonly GZIP_BIN
+
 FORCE=false
 COMPRESS_MODE=""
 FOLLOW_SYMLINKS=false
@@ -230,14 +238,14 @@ parse_args() {
 }
 
 validate_compress_dependencies() {
-    if ! command -v tar >/dev/null 2>&1 || ! command -v gzip >/dev/null 2>&1; then
+    if ! command -v "${TAR_BIN}" >/dev/null 2>&1 || ! command -v "${GZIP_BIN}" >/dev/null 2>&1; then
         error "Compression requires 'tar' and 'gzip' to be installed."
         exit 1
     fi
 }
 
 validate_exclude_dependencies() {
-    if ! command -v tar >/dev/null 2>&1; then
+    if ! command -v "${TAR_BIN}" >/dev/null 2>&1; then
         error "Exclude filtering requires 'tar' to be installed."
         exit 1
     fi
@@ -422,7 +430,7 @@ create_filtered_backup_stage() {
     local target="$1"
     local stage_dir="$2"
     local target_dir
-    local -a tar_cmd=("tar" "-cf" "-" "--no-recursion")
+    local -a tar_cmd=("${TAR_BIN}" "-cf" "-" "--no-recursion")
 
     target_dir="$(dirname "${target}")"
 
@@ -433,14 +441,14 @@ create_filtered_backup_stage() {
     tar_cmd+=("-C" "${target_dir}" "--")
     tar_cmd+=("${FILTERED_ENTRIES[@]}")
 
-    "${tar_cmd[@]}" | tar -xf - -C "${stage_dir}"
+    "${tar_cmd[@]}" | "${TAR_BIN}" -xf - -C "${stage_dir}"
 }
 
 write_filtered_archive() {
     local target="$1"
     local final_dest="$2"
     local target_dir
-    local -a tar_cmd=("tar" "-czf" "${final_dest}" "--no-recursion")
+    local -a tar_cmd=("${TAR_BIN}" "-czf" "${final_dest}" "--no-recursion")
 
     target_dir="$(dirname "${target}")"
 
@@ -563,7 +571,7 @@ build_backup_path() {
     backup_name="${base_name}"
 
     if [[ "${TIMESTAMP}" == "true" ]]; then
-        backup_name="${backup_name}.$(date +%Y%m%d%H%M%S)"
+        backup_name="${backup_name}.${INVOCATION_TIMESTAMP}"
     fi
 
     backup_name="${backup_name}.bkp"
@@ -587,7 +595,7 @@ build_merged_backup_path() {
     fi
 
     if [[ "${TIMESTAMP}" == "true" ]]; then
-        archive_name="${archive_name}.$(date +%Y%m%d%H%M%S)"
+        archive_name="${archive_name}.${INVOCATION_TIMESTAMP}"
     fi
 
     archive_name="${archive_name}.bkp.tar.gz"
@@ -631,7 +639,7 @@ backup_merged() {
     done
 
     final_dest="$(build_merged_backup_path)"
-    tar_cmd=("tar" "-czf" "${final_dest}")
+    tar_cmd=("${TAR_BIN}" "-czf" "${final_dest}")
 
     if [[ "${FOLLOW_SYMLINKS}" == "true" ]]; then
         tar_cmd+=("--dereference")
@@ -694,7 +702,7 @@ run_backup_operation() {
     local target_dir target_name
     local -a cp_cmd=("cp")
     local -a mv_cmd=("mv")
-    local -a tar_cmd=("tar" "-czf" "${final_dest}")
+    local -a tar_cmd=("${TAR_BIN}" "-czf" "${final_dest}")
 
     if [[ "${RECURSIVE}" == "true" ]]; then
         if [[ "${FOLLOW_SYMLINKS}" == "true" ]]; then
