@@ -6,7 +6,8 @@ bkp [OPTIONS] <path1> [path2] ...
 
 ## Options
 
-- `-c, --compress`: Create a compressed tar.gz backup. Requires `tar` and `gzip` only when used.
+- `-c, --compress[=MODE]`: Create a compressed tar.gz backup. `MODE` can be `merged` (default) or `separate`. Requires `tar` and `gzip` only when used.
+- `-a, --archive-name NAME`: Set the merged archive name. Required when merged compression targets multiple files or directories.
 - `-f, --force`: Overwrite existing backup files or directories.
 - `-s, --symbolic`: Follow symbolic links. By default, errors if a symlink is encountered.
 - `-r, --recursive`: Allow backing up directories.
@@ -29,27 +30,37 @@ bkp [OPTIONS] <path1> [path2] ...
    bkp -c file.txt # Creates file.txt.bkp.tar.gz
    ```
 
-3. **Move and Timestamp:**
+3. **Merged Compressed Backup for Multiple Targets:**
+   ```bash
+   bkp -c -a snapshot file.txt notes.txt # Creates snapshot.bkp.tar.gz containing both files
+   ```
+
+4. **Separate Compressed Backups for Multiple Targets:**
+   ```bash
+   bkp --compress=separate file.txt notes.txt # Creates file.txt.bkp.tar.gz and notes.txt.bkp.tar.gz
+   ```
+
+5. **Move and Timestamp:**
    ```bash
    bkp -mt file.txt # Moves file.txt to file.txt.20231024.bkp
    ```
 
-4. **Recursive Folder Backup:**
+6. **Recursive Folder Backup:**
    ```bash
    bkp -r my_folder # Creates my_folder.bkp
    ```
 
-5. **Follow Symlinks:**
+7. **Follow Symlinks:**
    ```bash
    bkp -s my_link # Backs up the actual file my_link points to.
    ```
 
-6. **Exclude Generated Files:**
+8. **Exclude Generated Files:**
    ```bash
    bkp -r -e '*.o' -e '*.tmp' project
    ```
 
-7. **Exclude a Folder While Moving:**
+9. **Exclude a Folder While Moving:**
    ```bash
    bkp -mr -e node_modules app
    ```
