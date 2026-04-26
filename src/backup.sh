@@ -12,7 +12,9 @@ SCRIPT_NAME="$(basename "$0")"
 readonly SCRIPT_NAME
 readonly VERSION="@@VERSION@@"
 readonly VERSION_PLACEHOLDER="@""@VERSION@""@"
-readonly INVOCATION_TIMESTAMP="$(date +%Y%m%d%H%M%S)"
+
+INVOCATION_TIMESTAMP="$(date +%Y%m%d%H%M%S)"
+readonly INVOCATION_TIMESTAMP
 
 FORCE=false
 COMPRESS_MODE=""
