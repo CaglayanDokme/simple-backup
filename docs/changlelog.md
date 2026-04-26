@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.4.0 - April 26, 2026
+### New features
+- Added compression modes: `-c` / `--compress` now defaults to merged archives, while `--compress=separate` preserves the previous one-archive-per-target behavior.
+- Added `-a` / `--archive-name NAME` for naming merged archives when backing up multiple targets.
+
 ## v0.3.0 - April 24, 2026
 ### New features
 - Added repeatable `-e` / `--exclude PATTERN` glob filtering for copy, move, and compressed backups.
