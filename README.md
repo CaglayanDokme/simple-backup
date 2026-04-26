@@ -28,7 +28,7 @@ bkp --version
 ## Features
 
 - **Copy or Move:** Backup by copying (default) or moving (`-m`).
-- **Compression:** Create `.tar.gz` archives with `-c` when you want a single compressed backup artifact.
+- **Compression Modes:** Use `-c` for a merged archive by default, or `--compress=separate` to keep one archive per target.
 - **Multiple Targets:** Backup multiple files or directories in one go.
 - **Recursive:** Support for backing up folders with `-r`.
 - **Pattern Exclusions:** Skip matching files or folders with repeatable `-e` glob patterns.

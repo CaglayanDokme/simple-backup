@@ -14,12 +14,13 @@ readonly VERSION="@@VERSION@@"
 readonly VERSION_PLACEHOLDER="@""@VERSION@""@"
 
 FORCE=false
-COMPRESS=false
+COMPRESS_MODE=""
 FOLLOW_SYMLINKS=false
 RECURSIVE=false
 TIMESTAMP=false
 MOVE=false
 DESTINATION=""
+ARCHIVE_NAME=""
 PATHS=()
 EXCLUDE_PATTERNS=()
 EXCLUDE_MATCH_COUNTS=()
@@ -56,15 +57,20 @@ Usage: ${SCRIPT_NAME} [OPTIONS] <path1> [path2] ...
 
 Options:
   -f, --force            Overwrite existing backup files or directories.
-  -c, --compress         Create a compressed tar.gz backup.
+  -c, --compress[=MODE]  Create a compressed tar.gz backup.
   -s, --symbolic         Follow symbolic links. By default, errors if a symlink is encountered.
   -r, --recursive        Allow backing up directories.
   -t, --timestamp        Add a timestamp to the backup name: <name>.<timestamp>.bkp
   -m, --move             Move the resource instead of copying.
   -d, --destination DIR  Specify a target directory for backups.
+  -a, --archive-name     Set merged archive name. Required for merged compression with multiple targets.
   -e, --exclude PATTERN  Exclude matching files or folders using glob patterns.
   -v, --version          Show version information.
   -h, --help             Show this help message.
+
+Compression modes (--compress[=MODE]):
+  merged                 Store targets in a single archive (default).
+  separate               Create one archive per target.
 EOF
 }
 
@@ -96,6 +102,20 @@ show_version() {
     printf '%s\n' "${resolved_version}"
 }
 
+set_compress_mode() {
+    local mode="$1"
+
+    case "${mode}" in
+        merged|separate)
+            COMPRESS_MODE="${mode}"
+            ;;
+        *)
+            error "Invalid compress mode: ${mode}. Use 'merged' or 'separate'."
+            exit 1
+            ;;
+    esac
+}
+
 parse_short_flags() {
     local flags="$1"
     local index flag
@@ -103,7 +123,7 @@ parse_short_flags() {
     for (( index = 0; index < ${#flags}; index++ )); do
         flag="${flags:index:1}"
         case "${flag}" in
-            c) COMPRESS=true ;;
+            c) COMPRESS_MODE="merged" ;;
             f) FORCE=true ;;
             s) FOLLOW_SYMLINKS=true ;;
             r) RECURSIVE=true ;;
@@ -126,7 +146,11 @@ parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             -c|--compress)
-                COMPRESS=true
+                COMPRESS_MODE="merged"
+                shift
+                ;;
+            --compress=*)
+                set_compress_mode "${1#--compress=}"
                 shift
                 ;;
             -f|--force)
@@ -155,6 +179,14 @@ parse_args() {
                     exit 1
                 fi
                 DESTINATION="$2"
+                shift 2
+                ;;
+            -a|--archive-name)
+                if [[ $# -lt 2 || -z "$2" || "$2" == -* ]]; then
+                    error "$1 requires a name."
+                    exit 1
+                fi
+                ARCHIVE_NAME="$2"
                 shift 2
                 ;;
             -e|--exclude)
@@ -228,7 +260,22 @@ validate_args() {
         exit 1
     fi
 
-    if [[ "${COMPRESS}" == "true" ]]; then
+    if [[ -n "${ARCHIVE_NAME}" && -z "${COMPRESS_MODE}" ]]; then
+        error "--archive-name requires merged compression."
+        exit 1
+    fi
+
+    if [[ -n "${ARCHIVE_NAME}" && "${COMPRESS_MODE}" != "merged" ]]; then
+        error "--archive-name can only be used with merged compression."
+        exit 1
+    fi
+
+    if [[ "${COMPRESS_MODE}" == "merged" && ${#PATHS[@]} -gt 1 && -z "${ARCHIVE_NAME}" ]]; then
+        error "Merged compression with multiple targets requires -a or --archive-name."
+        exit 1
+    fi
+
+    if [[ -n "${COMPRESS_MODE}" ]]; then
         validate_compress_dependencies
     fi
 
@@ -408,6 +455,8 @@ write_filtered_archive() {
 
 remove_filtered_source_entries() {
     local target="$1"
+    local source_paths_name="${2:-FILTERED_SOURCE_PATHS}"
+    local -n source_paths="${source_paths_name}"
     local index path
 
     if [[ ! -d "${target}" || -L "${target}" ]]; then
@@ -415,8 +464,8 @@ remove_filtered_source_entries() {
         return 0
     fi
 
-    for (( index = ${#FILTERED_SOURCE_PATHS[@]} - 1; index >= 1; index-- )); do
-        path="${FILTERED_SOURCE_PATHS[index]}"
+    for (( index = ${#source_paths[@]} - 1; index >= 1; index-- )); do
+        path="${source_paths[index]}"
 
         if [[ -d "${path}" && ! -L "${path}" ]]; then
             rmdir --ignore-fail-on-non-empty -- "${path}" 2>/dev/null || true
@@ -437,7 +486,7 @@ run_filtered_backup_operation() {
 
     target_name="$(basename "${target}")"
 
-    if [[ "${COMPRESS}" == "true" ]]; then
+    if [[ -n "${COMPRESS_MODE}" ]]; then
         prepare_destination "${final_dest}"
         write_filtered_archive "${target}" "${final_dest}"
     else
@@ -464,6 +513,48 @@ directory_contains_symlink() {
     return 1
 }
 
+validate_backup_target() {
+    local target="$1"
+
+    if [[ ! -e "${target}" && ! -L "${target}" ]]; then
+        error "Target does not exist: ${target}"
+        return 1
+    fi
+
+    if [[ -d "${target}" && "${RECURSIVE}" == "false" ]]; then
+        error "${target} is a directory. Use -r or --recursive to backup folders."
+        return 1
+    fi
+
+    if [[ "${FOLLOW_SYMLINKS}" == "false" ]]; then
+        if [[ -L "${target}" ]]; then
+            error "${target} is a symbolic link. Use -s or --symbolic to follow."
+            return 1
+        fi
+
+        if [[ -d "${target}" ]] && directory_contains_symlink "${target}"; then
+            error "Directory ${target} contains symbolic links. Use -s or --symbolic to follow."
+            return 1
+        fi
+    fi
+}
+
+validate_filtered_target() {
+    local target="$1"
+
+    build_filtered_entries "${target}"
+
+    if [[ "${FILTERED_ROOT_EXCLUDED}" == "true" ]]; then
+        error "Target ${target} is excluded by the provided patterns."
+        return 1
+    fi
+
+    if [[ -d "${target}" && ${FILTERED_TOTAL_CHILDREN} -gt 0 && ${FILTERED_INCLUDED_CHILDREN} -eq 0 ]]; then
+        error "All entries under ${target} are excluded."
+        return 1
+    fi
+}
+
 build_backup_path() {
     local target="$1"
     local base_name backup_name
@@ -477,7 +568,7 @@ build_backup_path() {
 
     backup_name="${backup_name}.bkp"
 
-    if [[ "${COMPRESS}" == "true" ]]; then
+    if [[ -n "${COMPRESS_MODE}" ]]; then
         backup_name="${backup_name}.tar.gz"
     fi
 
@@ -485,6 +576,26 @@ build_backup_path() {
         printf '%s\n' "${DESTINATION}/${backup_name}"
     else
         printf '%s\n' "$(dirname "${target}")/${backup_name}"
+    fi
+}
+
+build_merged_backup_path() {
+    local archive_name="${ARCHIVE_NAME}"
+
+    if [[ -z "${archive_name}" ]]; then
+        archive_name="$(basename "${PATHS[0]}")"
+    fi
+
+    if [[ "${TIMESTAMP}" == "true" ]]; then
+        archive_name="${archive_name}.$(date +%Y%m%d%H%M%S)"
+    fi
+
+    archive_name="${archive_name}.bkp.tar.gz"
+
+    if [[ -n "${DESTINATION}" ]]; then
+        printf '%s\n' "${DESTINATION}/${archive_name}"
+    else
+        printf '%s\n' "${archive_name}"
     fi
 }
 
@@ -501,6 +612,80 @@ prepare_destination() {
     fi
 
     rm -rf -- "${final_dest}"
+}
+
+backup_merged() {
+    local final_dest
+    local target
+    local target_dir
+    local target_name
+    local move_state_dir=""
+    local list_file
+    local index
+    local -a tar_cmd
+    local -a move_targets=()
+    local -a move_lists=()
+
+    for target in "${PATHS[@]}"; do
+        validate_backup_target "${target}" || return 1
+    done
+
+    final_dest="$(build_merged_backup_path)"
+    tar_cmd=("tar" "-czf" "${final_dest}")
+
+    if [[ "${FOLLOW_SYMLINKS}" == "true" ]]; then
+        tar_cmd+=("--dereference")
+    fi
+
+    if [[ ${#EXCLUDE_PATTERNS[@]} -gt 0 ]]; then
+        tar_cmd+=("--no-recursion")
+
+        if [[ "${MOVE}" == "true" ]]; then
+            move_state_dir="$(create_temp_dir)"
+        fi
+
+        for index in "${!PATHS[@]}"; do
+            target="${PATHS[index]}"
+            validate_filtered_target "${target}" || return 1
+
+            target_dir="$(dirname "${target}")"
+            tar_cmd+=("-C" "${target_dir}")
+            tar_cmd+=("${FILTERED_ENTRIES[@]}")
+
+            if [[ "${MOVE}" == "true" ]]; then
+                list_file="${move_state_dir}/${index}.paths"
+                printf '%s\n' "${FILTERED_SOURCE_PATHS[@]}" > "${list_file}"
+                move_targets+=("${target}")
+                move_lists+=("${list_file}")
+            fi
+        done
+    else
+        for target in "${PATHS[@]}"; do
+            target_dir="$(dirname "${target}")"
+            target_name="$(basename "${target}")"
+            tar_cmd+=("-C" "${target_dir}" "${target_name}")
+        done
+    fi
+
+    prepare_destination "${final_dest}"
+    "${tar_cmd[@]}"
+
+    if [[ "${MOVE}" == "true" ]]; then
+        if [[ ${#EXCLUDE_PATTERNS[@]} -gt 0 ]]; then
+            for index in "${!move_targets[@]}"; do
+                local -a merged_source_paths=()
+                # shellcheck disable=SC2034
+                mapfile -t merged_source_paths < "${move_lists[index]}"
+                remove_filtered_source_entries "${move_targets[index]}" merged_source_paths
+            done
+        else
+            for target in "${PATHS[@]}"; do
+                rm -rf -- "${target}"
+            done
+        fi
+    fi
+
+    echo "Backed up ${#PATHS[@]} target(s) -> ${final_dest}"
 }
 
 run_backup_operation() {
@@ -521,7 +706,7 @@ run_backup_operation() {
 
     prepare_destination "${final_dest}"
 
-    if [[ "${COMPRESS}" == "true" ]]; then
+    if [[ -n "${COMPRESS_MODE}" ]]; then
         target_dir="$(dirname "${target}")"
         target_name="$(basename "${target}")"
 
@@ -555,42 +740,12 @@ backup_path() {
     local target="$1"
     local final_dest
 
-    if [[ ! -e "${target}" && ! -L "${target}" ]]; then
-        error "Target does not exist: ${target}"
-        return 1
-    fi
-
-    if [[ -d "${target}" && "${RECURSIVE}" == "false" ]]; then
-        error "${target} is a directory. Use -r or --recursive to backup folders."
-        return 1
-    fi
-
-    if [[ "${FOLLOW_SYMLINKS}" == "false" ]]; then
-        if [[ -L "${target}" ]]; then
-            error "${target} is a symbolic link. Use -s or --symbolic to follow."
-            return 1
-        fi
-
-        if [[ -d "${target}" ]] && directory_contains_symlink "${target}"; then
-            error "Directory ${target} contains symbolic links. Use -s or --symbolic to follow."
-            return 1
-        fi
-    fi
+    validate_backup_target "${target}" || return 1
 
     final_dest="$(build_backup_path "${target}")"
 
     if [[ ${#EXCLUDE_PATTERNS[@]} -gt 0 ]]; then
-        build_filtered_entries "${target}"
-
-        if [[ "${FILTERED_ROOT_EXCLUDED}" == "true" ]]; then
-            error "Target ${target} is excluded by the provided patterns."
-            return 1
-        fi
-
-        if [[ -d "${target}" && ${FILTERED_TOTAL_CHILDREN} -gt 0 && ${FILTERED_INCLUDED_CHILDREN} -eq 0 ]]; then
-            error "All entries under ${target} are excluded."
-            return 1
-        fi
+        validate_filtered_target "${target}" || return 1
 
         run_filtered_backup_operation "${target}" "${final_dest}"
     else
@@ -605,6 +760,12 @@ main() {
 
     parse_args "$@"
     validate_args
+
+    if [[ "${COMPRESS_MODE}" == "merged" && ( ${#PATHS[@]} -gt 1 || -n "${ARCHIVE_NAME}" ) ]]; then
+        backup_merged
+        show_exclude_warnings
+        return 0
+    fi
 
     for path in "${PATHS[@]}"; do
         backup_path "${path}"
