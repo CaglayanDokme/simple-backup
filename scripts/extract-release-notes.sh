@@ -24,6 +24,56 @@ success() {
     echo "[✓] $*" >&2
 }
 
+parse_semver() {
+    local tag="$1"
+    local version="${tag#v}"
+    local major=""
+    local minor=""
+    local patch=""
+
+    if [[ ! "${tag}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+        error "Invalid version tag: ${tag}. Expected format vMAJOR.MINOR.PATCH."
+        exit 1
+    fi
+
+    IFS='.' read -r major minor patch <<< "${version}"
+    printf '%s %s %s\n' "${major}" "${minor}" "${patch}"
+}
+
+validate_version_sequence() {
+    local current_tag="$1"
+    local previous_tag="$2"
+    local current_major=""
+    local current_minor=""
+    local current_patch=""
+    local previous_major=""
+    local previous_minor=""
+    local previous_patch=""
+
+    read -r current_major current_minor current_patch <<< "$(parse_semver "${current_tag}")"
+    read -r previous_major previous_minor previous_patch <<< "$(parse_semver "${previous_tag}")"
+
+    if [[ "${current_major}" == "${previous_major}" && "${current_minor}" == "${previous_minor}" ]]; then
+        if (( current_patch == previous_patch + 1 )); then
+            return 0
+        fi
+    fi
+
+    if [[ "${current_major}" == "${previous_major}" ]]; then
+        if (( current_minor == previous_minor + 1 )) && (( current_patch == 0 )); then
+            return 0
+        fi
+    fi
+
+    if (( current_major == previous_major + 1 )) && (( current_minor == 0 )) && (( current_patch == 0 )); then
+        return 0
+    fi
+
+    error "Invalid version progression: ${current_tag} does not correctly follow ${previous_tag}."
+    error "Expected the next release to be either the next patch, next minor with patch reset to 0, or next major with minor and patch reset to 0."
+    exit 1
+}
+
 show_help() {
     cat <<EOF
 Usage: scripts/extract-release-notes.sh [OPTIONS] <version-tag> [output-file]
@@ -60,6 +110,7 @@ main() {
     local next_section_line=""
     local end_line=""
     local body=""
+    local previous_tag=""
 
     if [[ ! -f "${CHANGELOG}" ]]; then
         error "Changelog not found: ${CHANGELOG}"
@@ -72,6 +123,11 @@ main() {
         error "Changelog entry not found for ${tag}."
         error "Expected a header matching '## ${tag} - <date>' in ${CHANGELOG}."
         exit 1
+    fi
+
+    previous_tag="$(tail -n +"$((start_line + 1))" "${CHANGELOG}" | grep -m1 '^## v' | awk '{print $2}')" || true
+    if [[ -n "${previous_tag}" ]]; then
+        validate_version_sequence "${tag}" "${previous_tag}"
     fi
 
     total_lines="$(wc -l < "${CHANGELOG}")"
