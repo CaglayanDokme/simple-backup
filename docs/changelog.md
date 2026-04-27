@@ -1,5 +1,10 @@
 # Change Logs
 
+## Upcoming new version
+### Improvements
+- Write merged archives into the shared parent directory of the input targets when `-d` / `--destination` is not provided.
+- Fail merged compression with a clear error when targets span multiple directories and no destination is specified.
+
 ## v0.4.3 - April 26, 2026
 ### Improvements
 - Extracted the release workflow shell bodies into `scripts/extract-release-notes.sh` and `scripts/build-release.sh`.

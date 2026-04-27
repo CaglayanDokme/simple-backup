@@ -639,7 +639,25 @@ build_merged_backup_path() {
     if [[ -n "${DESTINATION}" ]]; then
         printf '%s\n' "${DESTINATION}/${archive_name}"
     else
-        printf '%s\n' "${archive_name}"
+        local target
+        local target_dir
+        local common_dir=""
+
+        for target in "${PATHS[@]}"; do
+            target_dir="$(cd "$(dirname "${target}")" && pwd)"
+
+            if [[ -z "${common_dir}" ]]; then
+                common_dir="${target_dir}"
+                continue
+            fi
+
+            if [[ "${target_dir}" != "${common_dir}" ]]; then
+                error "Merged compression targets are in different directories. Use -d or --destination to specify the output location."
+                return 1
+            fi
+        done
+
+        printf '%s\n' "${common_dir}/${archive_name}"
     fi
 }
 
@@ -674,7 +692,7 @@ backup_merged() {
         validate_backup_target "${target}" || return 1
     done
 
-    final_dest="$(build_merged_backup_path)"
+    final_dest="$(build_merged_backup_path)" || return 1
     tar_cmd=("${TAR_BIN}" "-czf" "${final_dest}")
 
     if [[ "${FOLLOW_SYMLINKS}" == "true" ]]; then
@@ -692,7 +710,7 @@ backup_merged() {
             target="${PATHS[index]}"
             validate_filtered_target "${target}" || return 1
 
-            target_dir="$(dirname "${target}")"
+            target_dir="$(cd "$(dirname "${target}")" && pwd)"
             tar_cmd+=("-C" "${target_dir}")
             tar_cmd+=("${FILTERED_ENTRIES[@]}")
 
@@ -705,7 +723,7 @@ backup_merged() {
         done
     else
         for target in "${PATHS[@]}"; do
-            target_dir="$(dirname "${target}")"
+            target_dir="$(cd "$(dirname "${target}")" && pwd)"
             target_name="$(basename "${target}")"
             tar_cmd+=("-C" "${target_dir}" "${target_name}")
         done
