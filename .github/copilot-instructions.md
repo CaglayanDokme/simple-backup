@@ -43,3 +43,4 @@
 - Add change summary to [docs/changelog.md](docs/changelog.md) when the change is a user-facing behavior change or new feature. For internal refactors, it's optional but helpful to add a brief note.
 - After completing a change, run `bash test/run-all.sh` to ensure no regressions. If a test fails, fix the issue before finalizing the change.
 - Finalize the change with a commit message draft that includes a concise summary of the change and references any relevant test scripts or documentation updates.
+- When all changes are complete and validated, remove leftover files.
