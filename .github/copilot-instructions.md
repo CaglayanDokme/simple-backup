@@ -41,6 +41,21 @@
 - Do not implement roadmap items unless the task asks for them.
 - When behavior or flags change, update [README.md](README.md) and [docs](docs) in the same change.
 - Add change summary to [docs/changelog.md](docs/changelog.md) when the change is a user-facing behavior change or new feature. For internal refactors, it's optional but helpful to add a brief note.
+- If there isn't a new version header in the changelog for the change, add an "Upcoming new version" section at the top with a brief summary of the change. This signals that the change is in progress and not yet released.
+
+```
+## Upcoming new version
+### Improvements
+- <Brief summary of the change here>
+
+### New features
+- <Brief summary of the new feature here>
+
+### Bug fixes
+- <Brief summary of the bug fix here>
+```
+
+- If there is already an "Upcoming new version" section or a relevant version header, add the summary under the appropriate section. You can determine whether to use the existing version header by checking the latest tag in the repository and trying to match it to the latest version in the changelog. If there is no tag matching the latest version from change log, then you can add the change summary to that version header instead of creating a new "Upcoming new version" section.
 - After completing a change, run `bash test/run-all.sh` to ensure no regressions. If a test fails, fix the issue before finalizing the change.
 - Finalize the change with a commit message draft that includes a concise summary of the change and references any relevant test scripts or documentation updates.
 - When all changes are complete and validated, remove leftover files.
