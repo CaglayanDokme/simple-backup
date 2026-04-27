@@ -1,6 +1,6 @@
 # Change Logs
 
-## Upcoming new version
+## v0.4.4 - April 27, 2026
 ### Improvements
 - Write merged archives into the shared parent directory of the input targets when `-d` / `--destination` is not provided.
 - Fail merged compression with a clear error when targets span multiple directories and no destination is specified.
