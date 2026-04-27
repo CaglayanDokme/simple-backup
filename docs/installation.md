@@ -18,6 +18,7 @@ wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/i
 - Downloads the installer from the repository
 - Fetches the pre-built `bkp` binary from the latest GitHub Release
 - Installs via symlink: `/usr/local/bin/bkp -> bkp-v0.2.0`
+- Installs bash completion to `/usr/share/bash-completion/completions/bkp` when `bash-completion` is available
 - Previous versions are kept alongside new ones for rollback
 - Uses `sudo` automatically if needed
 
@@ -38,6 +39,7 @@ curl -fsSL https://github.com/CaglayanDokme/simple-backup/releases/latest/downlo
 ```
 
 This skips the symlink versioning but is useful for minimal environments.
+It also skips automatic bash-completion installation.
 
 ## Developer: Clone and Install
 
@@ -53,6 +55,7 @@ This will:
 - Use the local `src/backup.sh` from your checkout
 - Embed the version from `git describe --tags --dirty --always`
 - Install via symlink, same as the release installer
+- Install bash completion when `/usr/share/bash-completion/completions` exists
 
 ## Symlink Versioning
 
@@ -71,6 +74,28 @@ To roll back, manually re-point the symlink:
 sudo ln -sf bkp-v0.1.0 /usr/local/bin/bkp
 ```
 
+## Bash Completion
+
+Both installers try to install Bash completion to:
+
+```text
+/usr/share/bash-completion/completions/bkp
+```
+
+If that directory does not exist, the installer skips completion setup and still installs `bkp` normally.
+
+On Debian and Ubuntu, install the package first if you want completion support:
+
+```bash
+sudo apt install bash-completion
+```
+
+After installation, start a new shell or source the completion file manually:
+
+```bash
+source /usr/share/bash-completion/completions/bkp
+```
+
 ## Verification
 
 After installation, verify `bkp` is working:
@@ -80,4 +105,5 @@ which bkp          # Should show: /usr/local/bin/bkp
 bkp --help         # Should display help message
 bkp --version      # Should display the installed release or local checkout version
 ls -l $(which bkp) # Should show symlink target
+complete -p bkp    # Should show the registered bash completion function
 ```

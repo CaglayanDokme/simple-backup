@@ -1,5 +1,9 @@
 # Change Logs
 
+## Upcoming new version
+### New features
+- Added Bash completion support for `bkp`, including installer integration for systems with `bash-completion` available.
+
 ## v0.4.4 - April 27, 2026
 ### Improvements
 - Write merged archives into the shared parent directory of the input targets when `-d` / `--destination` is not provided.
