@@ -58,7 +58,7 @@ _bkp() {
 
         local index
         for index in "${!COMPREPLY[@]}"; do
-            COMPREPLY[${index}]="--compress=${COMPREPLY[${index}]}"
+            COMPREPLY[index]="--compress=${COMPREPLY[index]}"
         done
 
         return 0
