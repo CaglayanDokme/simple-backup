@@ -12,6 +12,8 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 readonly REPO_ROOT
 readonly SOURCE_FILE="${REPO_ROOT}/src/backup.sh"
 readonly OUTPUT_FILE="${REPO_ROOT}/bkp"
+readonly COMPLETION_SOURCE_FILE="${REPO_ROOT}/src/bkp-completion.bash"
+readonly COMPLETION_OUTPUT_FILE="${REPO_ROOT}/bkp-completion.bash"
 
 error() {
     echo "[✗] Error: $*" >&2
@@ -60,9 +62,15 @@ main() {
         exit 1
     fi
 
-    info "Building ${OUTPUT_FILE##*/} for ${version}"
+    if [[ ! -f "${COMPLETION_SOURCE_FILE}" ]]; then
+        error "Completion source file not found: ${COMPLETION_SOURCE_FILE}"
+        exit 1
+    fi
+
+    info "Building ${OUTPUT_FILE##*/} and ${COMPLETION_OUTPUT_FILE##*/} for ${version}"
     sed "s/@@VERSION@@/${version}/g" "${SOURCE_FILE}" > "${OUTPUT_FILE}"
     chmod +x "${OUTPUT_FILE}"
+    cp "${COMPLETION_SOURCE_FILE}" "${COMPLETION_OUTPUT_FILE}"
 
     embedded_version="$(bash "${OUTPUT_FILE}" --version)"
     if [[ "${embedded_version}" != "${version}" ]]; then
@@ -70,7 +78,12 @@ main() {
         exit 1
     fi
 
-    success "Built ${OUTPUT_FILE##*/} with embedded version ${version}"
+    if ! grep -qx 'complete -F _bkp bkp' "${COMPLETION_OUTPUT_FILE}"; then
+        error "Completion artifact does not contain the expected registration line."
+        exit 1
+    fi
+
+    success "Built ${OUTPUT_FILE##*/} and ${COMPLETION_OUTPUT_FILE##*/} for ${version}"
 }
 
 main "$@"

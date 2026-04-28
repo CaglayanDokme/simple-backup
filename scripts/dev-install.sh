@@ -12,8 +12,10 @@ readonly SCRIPT_DIR
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 readonly REPO_ROOT
 readonly SOURCE_FILE="${REPO_ROOT}/src/backup.sh"
+readonly COMPLETION_SOURCE_FILE="${REPO_ROOT}/src/bkp-completion.bash"
 
 readonly INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+readonly COMPLETION_DIR="${COMPLETION_DIR:-/usr/share/bash-completion/completions}"
 readonly TARGET_NAME="${TARGET_NAME:-bkp}"
 
 TEMP_FILE=""
@@ -50,6 +52,7 @@ Options:
 
 Environment:
   INSTALL_DIR   Override install directory (default: /usr/local/bin).
+    COMPLETION_DIR Override bash-completion directory (default: /usr/share/bash-completion/completions).
 EOF
 }
 
@@ -95,6 +98,12 @@ install_script() {
         exit 1
     fi
 
+    if [[ ! -f "${COMPLETION_SOURCE_FILE}" ]]; then
+        error "Completion source not found: ${COMPLETION_SOURCE_FILE}"
+        error "Run this script from a cloned simple-backup repository."
+        exit 1
+    fi
+
     TEMP_FILE="$(mktemp)" || exit 1
     cp "${SOURCE_FILE}" "${TEMP_FILE}"
 
@@ -123,6 +132,13 @@ install_script() {
 
     success "Installed ${versioned_name}"
     info "${symlink_path} -> ${versioned_name}"
+
+    if [[ -d "${COMPLETION_DIR}" ]]; then
+        run_privileged install -m 0644 "${COMPLETION_SOURCE_FILE}" "${COMPLETION_DIR}/${TARGET_NAME}" || exit 1
+        success "Installed bash completion to ${COMPLETION_DIR}/${TARGET_NAME}"
+    else
+        info "Skipping bash completion installation because ${COMPLETION_DIR} does not exist."
+    fi
 
     if command -v "${TARGET_NAME}" >/dev/null 2>&1; then
         success "Verified: '${TARGET_NAME}' is available in PATH ($(${TARGET_NAME} --version))"

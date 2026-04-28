@@ -1,0 +1,16 @@
+{
+    "name": "simple-backup",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "remoteUser": "ubuntu",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "timonwong.shellcheck",
+                "mads-hartmann.bash-ide-vscode",
+                "eamodio.gitlens"
+            ]
+        }
+    }
+}

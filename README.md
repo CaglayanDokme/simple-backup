@@ -18,6 +18,7 @@ wget -qO- https://raw.githubusercontent.com/CaglayanDokme/simple-backup/master/i
 
 This downloads the pre-built release artifact from GitHub Releases and installs it
 via symlink (`bkp -> bkp-v0.2.0`), keeping previous versions for rollback.
+If `bash-completion` is installed, the installer also enables Tab completion for `bkp`.
 
 Once installed, verify it works:
 ```bash
@@ -32,6 +33,7 @@ bkp --version
 - **Multiple Targets:** Backup multiple files or directories in one go.
 - **Recursive:** Support for backing up folders with `-r`.
 - **Pattern Exclusions:** Skip matching files or folders with repeatable `-e` glob patterns.
+- **Shell Completion:** Install Bash completion for options and common argument types.
 - **Symlink Awareness:** Safely handle symbolic links. Force resolution with `-s`.
 - **Timestamps:** Add unique timestamps to backup filenames with `-t`.
 - **Custom Destinations:** Specify a target directory for backups with `-d`.

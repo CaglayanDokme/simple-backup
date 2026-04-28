@@ -9,17 +9,24 @@
 set -euo pipefail
 
 readonly INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+readonly COMPLETION_DIR="${COMPLETION_DIR:-/usr/share/bash-completion/completions}"
 readonly TARGET_NAME="${TARGET_NAME:-bkp}"
+readonly COMPLETION_ASSET_NAME="${TARGET_NAME}-completion.bash"
 readonly REPOSITORY="CaglayanDokme/simple-backup"
 readonly GITHUB_RELEASES_URL="https://github.com/${REPOSITORY}/releases"
 
-TEMP_FILE=""
+TEMP_BINARY_FILE=""
+TEMP_COMPLETION_FILE=""
 REQUESTED_VERSION=""
 
 cleanup() {
-    if [[ -n "${TEMP_FILE}" && -f "${TEMP_FILE}" ]]; then
-        rm -f "${TEMP_FILE}"
-    fi
+    local temp_file
+
+    for temp_file in "${TEMP_BINARY_FILE}" "${TEMP_COMPLETION_FILE}"; do
+        if [[ -n "${temp_file}" && -f "${temp_file}" ]]; then
+            rm -f "${temp_file}"
+        fi
+    done
 }
 
 trap cleanup EXIT
@@ -44,11 +51,18 @@ Options:
   --version TAG    Install a specific tagged release (for example: v0.2.0).
   -h, --help       Show this help message.
 
+Environment:
+    INSTALL_DIR      Override the binary install directory.
+    COMPLETION_DIR   Override the bash-completion install directory.
+
 When no version is provided, the latest published GitHub Release is installed.
 Old versions are kept alongside new ones for rollback:
   ${INSTALL_DIR}/${TARGET_NAME}        -> ${TARGET_NAME}-v0.2.0  (symlink)
   ${INSTALL_DIR}/${TARGET_NAME}-v0.2.0                           (binary)
   ${INSTALL_DIR}/${TARGET_NAME}-v0.1.0                           (previous)
+
+If ${COMPLETION_DIR} exists, the installer also places bash completion at:
+    ${COMPLETION_DIR}/${TARGET_NAME}
 EOF
 }
 
@@ -117,6 +131,20 @@ validate_payload() {
     fi
 }
 
+validate_completion_payload() {
+    local completion_file="$1"
+
+    if [[ ! -s "${completion_file}" ]]; then
+        error "Downloaded completion payload is empty."
+        return 1
+    fi
+
+    if ! grep -qx 'complete -F _bkp bkp' "${completion_file}"; then
+        error "Downloaded payload does not look like the bkp completion script."
+        return 1
+    fi
+}
+
 run_privileged() {
     if [[ "${EUID}" -eq 0 ]]; then
         "$@"
@@ -133,27 +161,30 @@ run_privileged() {
 }
 
 install_script() {
-    local download_url
+    local binary_download_url
+    local completion_download_url
     local version
 
     if [[ -n "${REQUESTED_VERSION}" ]]; then
         validate_version_tag "${REQUESTED_VERSION}" || exit 1
-        download_url="${GITHUB_RELEASES_URL}/download/${REQUESTED_VERSION}/${TARGET_NAME}"
+        binary_download_url="${GITHUB_RELEASES_URL}/download/${REQUESTED_VERSION}/${TARGET_NAME}"
+        completion_download_url="${GITHUB_RELEASES_URL}/download/${REQUESTED_VERSION}/${COMPLETION_ASSET_NAME}"
     else
-        download_url="${GITHUB_RELEASES_URL}/latest/download/${TARGET_NAME}"
+        binary_download_url="${GITHUB_RELEASES_URL}/latest/download/${TARGET_NAME}"
+        completion_download_url="${GITHUB_RELEASES_URL}/latest/download/${COMPLETION_ASSET_NAME}"
     fi
 
-    TEMP_FILE="$(mktemp)" || exit 1
+    TEMP_BINARY_FILE="$(mktemp)" || exit 1
 
     info "Downloading ${TARGET_NAME} from GitHub Releases..."
-    download "${download_url}" "${TEMP_FILE}" || {
+    download "${binary_download_url}" "${TEMP_BINARY_FILE}" || {
         error "Download failed. Check the version tag and try again."
         exit 1
     }
 
-    validate_payload "${TEMP_FILE}" || exit 1
+    validate_payload "${TEMP_BINARY_FILE}" || exit 1
 
-    version="$(bash "${TEMP_FILE}" --version)" || {
+    version="$(bash "${TEMP_BINARY_FILE}" --version)" || {
         error "Failed to extract version from downloaded script."
         exit 1
     }
@@ -165,11 +196,29 @@ install_script() {
     info "Installing ${versioned_name} to ${INSTALL_DIR}..."
 
     run_privileged mkdir -p "${INSTALL_DIR}" || exit 1
-    run_privileged install -m 0755 "${TEMP_FILE}" "${versioned_path}" || exit 1
+    run_privileged install -m 0755 "${TEMP_BINARY_FILE}" "${versioned_path}" || exit 1
     run_privileged ln -sf "${versioned_name}" "${symlink_path}" || exit 1
 
     success "Installed ${versioned_name}"
     info "${symlink_path} -> ${versioned_name}"
+
+    if [[ -d "${COMPLETION_DIR}" ]]; then
+        TEMP_COMPLETION_FILE="$(mktemp)" || exit 1
+
+        info "Downloading bash completion from GitHub Releases..."
+        if download "${completion_download_url}" "${TEMP_COMPLETION_FILE}"; then
+            if validate_completion_payload "${TEMP_COMPLETION_FILE}"; then
+                run_privileged install -m 0644 "${TEMP_COMPLETION_FILE}" "${COMPLETION_DIR}/${TARGET_NAME}" || exit 1
+                success "Installed bash completion to ${COMPLETION_DIR}/${TARGET_NAME}"
+            else
+                info "Skipping bash completion installation because the downloaded asset was not valid."
+            fi
+        else
+            info "Skipping bash completion installation because the release does not provide ${COMPLETION_ASSET_NAME}."
+        fi
+    else
+        info "Skipping bash completion installation because ${COMPLETION_DIR} does not exist."
+    fi
 
     if command -v "${TARGET_NAME}" >/dev/null 2>&1; then
         success "Verified: '${TARGET_NAME}' is available in PATH ($(${TARGET_NAME} --version))"

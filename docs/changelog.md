@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.4.5 - April 28, 2026
+### Improvements
+- Added Bash completion support for `bkp`, including installer integration for systems with `bash-completion` available.
+- Added Docker environment configuration for isolated development environment and Github codespaces.
+
 ## v0.4.4 - April 27, 2026
 ### Improvements
 - Write merged archives into the shared parent directory of the input targets when `-d` / `--destination` is not provided.
