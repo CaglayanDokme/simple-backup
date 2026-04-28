@@ -1,6 +1,6 @@
 # Change Logs
 
-## v0.4.5 - April 27, 2026
+## v0.4.5 - April 28, 2026
 ### Improvements
 - Added Bash completion support for `bkp`, including installer integration for systems with `bash-completion` available.
 - Added Docker environment configuration for isolated development environment and Github codespaces.
