@@ -12,6 +12,7 @@ RUN apt-get install -y gzip
 RUN apt-get install -y git
 RUN apt-get install -y sudo
 RUN apt-get install -y tar
+RUN apt-get install -y stow
 
 # Grant the built-in 'ubuntu' user (UID/GID 1000) passwordless sudo.
 RUN echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ubuntu \
